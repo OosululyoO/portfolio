@@ -2,13 +2,11 @@ backend:
   name: github
   repo: OosululyoO/portfolio
   branch: main
-  # 這是關鍵的一行，請填寫你修改後的 Netlify 完整網址
   site_domain: oosululyoo-portfolio.netlify.app
-  # 如果你想要在本地開發時也能登入，可以加上這行（選填）
-  base_url: https://api.netlify.com
 
-media_folder: "public/images/uploads" # 圖片上傳後的存放路徑
-public_folder: "/images/uploads"      # 程式碼中引用圖片的網址路徑
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
 
 collections:
   # 1. Portfolio: AIoT 與軟體作品
