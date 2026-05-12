@@ -1,15 +1,14 @@
 backend:
   name: github
-  repo: OosululyoO/portfolio # 你的倉庫路徑
-  branch: main # 你的主分支
-  # 移除 local_backend: true，或是僅在本地測試時開啟
-  
-# 這是關鍵：因為 GitHub Pages 沒有內建登入系統，
-# 你需要一個 OAuth Proxy 來處理登入權限。
-# 如果你不想自行架設，可以使用第三方提供的服務（如：https://api.netlify.com/auth）
-# 或者參考 Decap CMS 官方推薦的授權方式。
-# base_url: https://your-oauth-proxy.com 
+  repo: OosululyoO/portfolio
+  branch: main
+  # 這是關鍵修正：明確指定擔任「警衛」的 Netlify 網址
+  base_url: "https://oosululyoo-portfolio.netlify.app" 
 
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+# 下方的 collections 保持不變...
 publish_mode: editorial_workflow # 選用：開啟審核流程
 local_backend: true
 
