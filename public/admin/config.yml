@@ -4,7 +4,7 @@ backend:
   repo: OosululyoO/portfolio
   branch: main
   # 刪除原本的 base_url，改用 site_domain
-  site_domain: "oosululyoo-portfolio.netlify.app" 
+  base_url: "https://netlify-cms-github-oauth-provider-theta-blush.vercel.app"
 
 # ... 下面的 media_folder 等設定維持原樣不變
 
