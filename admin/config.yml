@@ -2,15 +2,12 @@ backend:
   name: github
   repo: OosululyoO/portfolio
   branch: main
-  # base_url 和 site_domain 都不需要了，請直接刪除這兩行
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
-# ... 下面保留不變 ...
 
-# ... 下面的 collections 保持不變 ...
 collections:
-  # 1. Portfolio: AIoT 與軟體作品
+  # 1. Portfolio: 加入 Tags 方便分類顯示
   - name: "portfolio"
     label: "Portfolio (作品)"
     folder: "src/content/portfolio"
@@ -19,22 +16,24 @@ collections:
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "select", options: ["AIoT", "Software"] }
-      - { label: "Featured Image", name: "thumbnail", widget: "image" }
-      - { label: "Description", name: "body", widget: "markdown" }
+      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
+      - { label: "Short Description", name: "description", widget: "string" } # 修改此處以對應前端
+      - { label: "Tags", name: "tags", widget: "list", default: ["ESP32", "React"] }
+      - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 2. Achievements: 競賽列表與獎狀
+  # 2. Achievements: 統一年份與描述欄位
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
     create: true
     fields:
       - { label: "Award Name", name: "title", widget: "string" }
-      - { label: "Competition", name: "competition", widget: "string" }
-      - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Certificate Image", name: "image", widget: "image" }
-      - { label: "Summary", name: "body", widget: "text" }
+      - { label: "Organization", name: "organization", widget: "string" }
+      - { label: "Year", name: "year", widget: "string", hint: "例如: 2025" } # 修改此處
+      - { label: "Summary", name: "description", widget: "text" } # 修改此處
+      - { label: "Certificate Image", name: "image", widget: "image", required: false }
 
-  # 3. Activities: 活動紀錄瀑布流
+  # 3. Activities: 活動紀錄
   - name: "activities"
     label: "Activities (活動紀錄)"
     folder: "src/content/activities"
@@ -42,5 +41,4 @@ collections:
     fields:
       - { label: "Event Name", name: "title", widget: "string" }
       - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Event Photos", name: "photos", widget: "list", field: { label: "Photo", name: "photo", widget: "image" } }
       - { label: "Content", name: "body", widget: "markdown" }
