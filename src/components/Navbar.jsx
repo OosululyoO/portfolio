@@ -1,11 +1,11 @@
 const Navbar = () => {
-  const navItems = [
-    { name: 'Home', path: '#' },
-    { name: 'Portfolio', path: '#' },
-    { name: 'Achievements', path: '#' },
-    { name: 'Activities', path: '#' },
-    { name: 'About', path: '#' }
-  ];
+const navItems = [
+  { name: 'Home', path: '#' },
+  { name: 'Portfolio', path: '#portfolio' },
+  { name: 'Achievements', path: '#achievements' },
+  { name: 'Activities', path: '#activities' },
+  { name: 'About', path: '#about' }
+];
 
   return (
     <nav className="fixed top-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-gray-100">
