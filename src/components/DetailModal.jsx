@@ -1,129 +1,101 @@
-import { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
 
-// --- 子組件: 自動適應比例的輪播器 ---
-const ImageCarousel = ({ images, title, containerClass = "h-[300px] md:h-[500px]" }) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  if (!images || images.length === 0) return null;
-
-  const handleNext = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  };
-
-  const handlePrev = (e) => {
-    e.stopPropagation();
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  return (
-    <div className={`relative group w-full ${containerClass} overflow-hidden rounded-[2.5rem] bg-slate-50 border border-slate-100 shadow-sm mb-10`}>
-      {/* 動態背景：毛玻璃效果模擬圖片色調 */}
-      <div className="absolute inset-0 opacity-20 blur-3xl scale-150">
-        <img src={images[currentIndex]} alt="bg" className="w-full h-full object-cover" />
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentIndex}
-          src={images[currentIndex]}
-          alt={`${title}-${currentIndex}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-          // 關鍵修改：使用 object-contain 確保不被裁切，並置中顯示
-          className="relative z-10 w-full h-full object-contain"
-        />
-      </AnimatePresence>
-
-      {images.length > 1 && (
-        <>
-          <button onClick={handlePrev} className="absolute left-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white text-slate-900 shadow-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center z-20">
-            ←
-          </button>
-          <button onClick={handleNext} className="absolute right-6 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/40 hover:bg-white text-slate-900 shadow-lg backdrop-blur-md transition-all opacity-0 group-hover:opacity-100 flex items-center justify-center z-20">
-            →
-          </button>
-          
-          <div className="absolute bottom-6 right-8 px-4 py-1.5 rounded-full bg-slate-900/40 backdrop-blur-md text-white text-[10px] font-black tracking-widest z-20">
-            {currentIndex + 1} / {images.length}
-          </div>
-        </>
-      )}
-    </div>
-  );
+// --- Utility: 處理靜態資源路徑 (與 App.jsx 保持一致) ---
+const getAssetPath = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  const base = '/portfolio/'; 
+  return `${base}${cleanPath}`;
 };
 
 const DetailModal = ({ isOpen, onClose, content }) => {
-  useEffect(() => {
-    if (isOpen) {
-      const modalElement = document.getElementById('modal-content');
-      if (modalElement) modalElement.scrollTop = 0;
-    }
-  }, [isOpen, content]);
-
   if (!content) return null;
+
+  const { title, category, main_images, extra_images, body, description } = content;
+  
+  // 合併所有圖片並套用路徑修正
+  const allImages = [...(main_images || []), ...(extra_images || [])];
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
-            onClick={onClose} 
-            className="absolute inset-0 bg-slate-900/80 backdrop-blur-xl" 
+        <>
+          {/* 背景遮罩 */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] cursor-zoom-out"
           />
-          
-          <motion.div 
-            id="modal-content"
-            initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-            animate={{ scale: 1, opacity: 1, y: 0 }} 
-            exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-            className="relative bg-white w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-[3.5rem] shadow-2xl z-10"
+
+          {/* 視窗主體 */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="fixed inset-x-4 top-[10%] bottom-[5%] md:inset-x-24 md:top-[12%] md:bottom-[8%] bg-white rounded-[3rem] shadow-2xl z-[101] overflow-hidden flex flex-col border border-white/20"
           >
-            <button 
-              onClick={onClose} 
-              className="fixed md:absolute top-6 right-8 text-slate-400 hover:text-blue-600 transition-colors font-black text-2xl z-50 bg-white/80 backdrop-blur-md w-12 h-12 rounded-full flex items-center justify-center shadow-sm"
-            >
-              ✕
-            </button>
+            {/* 頂部控制列 */}
+            <div className="absolute top-8 right-8 z-[102]">
+              <button
+                onClick={onClose}
+                className="p-4 bg-slate-100 hover:bg-black hover:text-white rounded-full transition-all duration-300 group"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-            <div className="p-8 md:p-14">
-              {/* 主要照片輪播 - 自動適應 */}
-              <ImageCarousel images={content.main_images} title={content.title} containerClass="h-[350px] md:h-[600px]" />
+            <div className="flex-grow overflow-y-auto custom-scrollbar">
+              <div className="max-w-5xl mx-auto px-8 py-16">
+                {/* 標題區域 */}
+                <header className="mb-12">
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600 mb-4 block">
+                    {category}
+                  </span>
+                  <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-900 mb-6 uppercase leading-none">
+                    {title}
+                  </h2>
+                  <p className="text-xl text-slate-500 font-medium leading-relaxed max-w-3xl">
+                    {description}
+                  </p>
+                </header>
 
-              <div className="max-w-3xl mx-auto">
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100/50 inline-block mb-6">
-                  {content.category || "PROJECT"}
-                </span>
-                
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-10 leading-[0.95] text-slate-900">
-                  {content.title}
-                </h2>
+                {/* 內容區塊 */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                  <div className="lg:col-span-12">
+                    {/* 主要內容 (Markdown Body) */}
+                    <article className="prose prose-slate prose-lg max-w-none 
+                      prose-headings:font-black prose-headings:tracking-tighter prose-headings:uppercase
+                      prose-p:text-slate-600 prose-p:leading-relaxed
+                      prose-strong:text-slate-900 prose-strong:font-bold">
+                      {body}
+                    </article>
 
-                <div className="prose prose-slate prose-lg max-w-none mb-16">
-                  <ReactMarkdown>{content.body}</ReactMarkdown>
-                </div>
-
-                {/* 附加照片輪播 - 自動適應 */}
-                {content.extra_images && content.extra_images.length > 0 && (
-                  <div className="pt-12 border-t border-slate-100 mb-12">
-                    <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-8 text-center">Project Gallery / 附加照片</h4>
-                    <ImageCarousel images={content.extra_images} title={`${content.title}-extra`} containerClass="h-[300px] md:h-[500px]" />
+                    {/* 圖片展示牆 */}
+                    {allImages.length > 0 && (
+                      <div className="mt-16 space-y-8">
+                        {allImages.map((img, index) => (
+                          <div key={index} className="rounded-[2.5rem] overflow-hidden border border-slate-100 bg-slate-50 shadow-sm">
+                            <img 
+                              src={getAssetPath(img)} 
+                              alt={`${title} - ${index}`} 
+                              className="w-full h-auto object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-
-                <div className="h-[1px] w-full bg-slate-100 mb-10" />
-                <p className="text-slate-400 text-[10px] font-black tracking-widest uppercase text-center md:text-left">
-                  Project Archive / © 2026 LIU JIN AN
-                </p>
+                </div>
               </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   );
