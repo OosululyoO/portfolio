@@ -2,6 +2,7 @@ backend:
   name: github
   repo: OosululyoO/portfolio # 例如: jinan-liu/portfolio-web
   branch: main
+site_domain: exquisite-monstera-969273.netlify.app
 
 media_folder: "public/images/uploads" # 圖片上傳後的存放路徑
 public_folder: "/images/uploads"      # 程式碼中引用圖片的網址路徑
