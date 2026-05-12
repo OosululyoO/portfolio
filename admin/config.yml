@@ -8,8 +8,10 @@ public_folder: "/images/uploads"
 # ... backend 等設定保持不變 ...
 
 
+# ... backend 與 media_folder 保持不變 ...
+
 collections:
-  # 1. 全域設定
+  # 1. 全域設定 (包含通用分類與首頁文字管理)
   - name: "settings"
     label: "Global Settings (全域設定)"
     files:
@@ -17,22 +19,31 @@ collections:
         label: "Categories Management (分類管理)"
         file: "src/content/settings/categories.yml"
         fields:
-          - label: "All Categories (所有類別)"
+          - label: "All Categories"
             name: "all_categories"
             widget: "list"
             field: { label: "Category Name", name: "name", widget: "string" }
+      
+      - name: "hero"
+        label: "Homepage Hero (首頁文字設定)"
+        file: "src/content/settings/hero.yml"
+        fields:
+          - { label: "Main Title (第一行)", name: "titleLine1", widget: "string" }
+          - { label: "Accent Title (漸層行)", name: "titleAccent", widget: "string" }
+          - { label: "Description (個人簡介)", name: "heroDescription", widget: "text" }
 
-  # 2. Portfolio
-  - name: "portfolio"
-    label: "Portfolio (作品)"
-    folder: "src/content/portfolio"
+  # 2. About (關於我) - 採用與 Portfolio 一樣的結構
+  - name: "about"
+    label: "About (關於我資料)"
+    folder: "src/content/about"
     create: true
     fields:
-      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Section Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
-      - { label: "Short Description", name: "description", widget: "string" }
+      - { label: "Profile Image", name: "thumbnail", widget: "image", required: false }
+      - { label: "Short Bio", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
+
 
   # 3. Achievements
   - name: "achievements"
