@@ -1,21 +1,15 @@
+# 1. 後端與授權設定 (確保整個檔案只有這一個 backend 區塊)
 backend:
   name: github
   repo: OosululyoO/portfolio
   branch: main
-  # 這是關鍵修正：明確指定擔任「警衛」的 Netlify 網址
   base_url: "https://oosululyoo-portfolio.netlify.app" 
 
+# 2. 媒體檔案路徑 (確保整個檔案只有這一組)
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
-# 下方的 collections 保持不變...
-publish_mode: editorial_workflow # 選用：開啟審核流程
-local_backend: true
-
-media_folder: "public/images/uploads"
-public_folder: "/images/uploads"
-
-# 定義重複使用的欄位結構 (Common Fields)
+# 3. 定義重複使用的欄位結構 (YAML 錨點)
 common_fields: &common_fields
   - { label: "Title", name: "title", widget: "string" }
   - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
@@ -32,6 +26,7 @@ common_fields: &common_fields
   - { label: "Short Description", name: "description", widget: "string" }
   - { label: "Full Content", name: "body", widget: "markdown" }
 
+# 4. 集合設定
 collections:
   - name: "settings"
     label: "Global Settings"
