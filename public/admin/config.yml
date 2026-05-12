@@ -9,8 +9,9 @@ backend:
 # ... 下面的 media_folder 等設定維持原樣不變
 
 # 2. 媒體檔案路徑 (確保整個檔案只有這一組)
+# 修正 config.yml 的媒體設定
 media_folder: "public/images/uploads"
-public_folder: "/images/uploads"
+public_folder: "images/uploads" 
 
 # 3. 定義重複使用的欄位結構 (YAML 錨點)
 common_fields: &common_fields
