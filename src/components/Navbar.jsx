@@ -15,7 +15,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         {/* Logo */}
         <div className="text-xl font-black tracking-tighter text-slate-900">
-          LIU JIN AN<span className="text-blue-600">.</span>
+          LIU CHIN AN<span className="text-blue-600">.</span>
         </div>
 
         {/* 桌面版選單 (md 以上顯示) */}
