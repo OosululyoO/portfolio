@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // 替換為你的 GitHub 倉庫名稱，例如 /portfolio/
-  base: '/portfolio/', 
+  base: '/portfolio/', // 確保這一行存在且正確，前後都要有斜線
 })

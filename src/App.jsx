@@ -4,7 +4,7 @@ import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
-// --- Utility: 通用內容讀取器 ---
+// --- Utility: 通用內容讀取器 (強化路徑與 GitHub Pages 相容性) ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
     const rawContent = modules[path].default;
@@ -15,6 +15,7 @@ const loadContent = (modules) => {
         const body = parts.slice(2).join('---').trim();
         const slug = path.split('/').pop().replace('.md', '');
 
+        // 處理 Decap CMS 的圖片列表格式 [{image: "..."}] 轉為 ["..."]
         const normalizeImages = (imgData) => {
           if (!imgData) return [];
           return Array.isArray(imgData) 
@@ -38,7 +39,7 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 通用組件: ContentCard (加上個別小外框) ---
+// --- 通用組件: ContentCard (具備小外框與互動感) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
@@ -56,7 +57,6 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
       className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out" 
       onClick={onClick}
     >
-      {/* 內部圖片區 */}
       <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 bg-slate-50 border border-slate-50 shadow-inner group-hover:-translate-y-1 transition-transform duration-500">
         {images.length > 0 ? (
           <img 
@@ -66,7 +66,7 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-slate-300 font-black italic bg-slate-50">NO IMAGE</div>
+          <div className="flex items-center justify-center h-full text-slate-300 font-[900] italic bg-slate-50 uppercase">NO IMAGE</div>
         )}
         
         {images.length > 1 && (
@@ -76,12 +76,9 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
             ))}
           </div>
         )}
-
-        {/* 懸停漸層遮罩 */}
         <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
 
-      {/* 文字內容區 */}
       <div className="px-3 pb-4 flex-grow">
         {category && (
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50/50 px-3 py-1 rounded-full inline-block mb-3 border border-blue-100/30">
@@ -99,9 +96,9 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
   );
 };
 
-// --- 主程式: App ---
+// --- 主程式: App (預設匯出) ---
 export default function App() {
-  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: 'Loading profile...' });
+  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '正在載入個人簡介...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -116,6 +113,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    // ⚠️ 關鍵：使用相對路徑以適應 GitHub Pages 的子目錄部署
     const heroModule = import.meta.glob('./content/settings/hero.yml', { query: '?raw', eager: true });
     const heroPath = Object.keys(heroModule)[0];
     if (heroPath) {
@@ -139,6 +137,7 @@ export default function App() {
       <Navbar />
       
       <main className="relative pt-32 px-6 max-w-7xl mx-auto">
+        {/* --- Hero Section --- */}
         <section className="py-24">
           <div className="max-w-4xl">
             <h1 className="text-6xl md:text-[8rem] font-[900] tracking-tighter leading-[0.85] mb-12">
@@ -153,6 +152,7 @@ export default function App() {
           </div>
         </section>
 
+        {/* --- 內容區塊渲染 --- */}
         {[
           { id: 'about', title: 'About', data: about },
           { id: 'portfolio', title: 'Portfolio', data: portfolio },
@@ -165,7 +165,7 @@ export default function App() {
               <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
             </div>
 
-            {/* 大區塊容器 */}
+            {/* 大區塊美化外筐 */}
             <div className="bg-slate-50/50 backdrop-blur-sm border border-slate-100/50 rounded-[4rem] p-6 md:p-10">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {section.data.map((item) => (
@@ -173,7 +173,7 @@ export default function App() {
                 ))}
                 {section.data.length === 0 && (
                   <div className="col-span-full py-20 text-center text-slate-400 font-medium italic opacity-60">
-                    探索更多內容中...
+                    目前尚無內容，請至後台新增
                   </div>
                 )}
               </div>
