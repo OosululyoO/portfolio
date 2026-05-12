@@ -48,14 +48,13 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 子組件: 內容卡片 (包含隨機輪播與 Read More) ---
+// --- 子組件: 內容卡片 (已精準修正 hover 範圍) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
 
   useEffect(() => {
     if (images.length <= 1) return;
-    // 產生 3000ms ~ 6000ms 之間的隨機時間，讓切換錯開
     const randomInterval = Math.floor(Math.random() * 3000) + 3000;
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -64,6 +63,7 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
   }, [images]);
 
   return (
+    // 關鍵修正：確保 'group' 放在卡片層級，這樣 hover 效果才會精確作用於單一項目
     <div 
       className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out" 
       onClick={onClick}
@@ -175,28 +175,29 @@ export default function App() {
         ].map(section => {
           const sectionRef = useRef(null);
           return (
-            <section key={section.id} id={section.id} className="py-16 relative group">
+            // 關鍵修正：將 'group' 從 section 移除，避免全局懸停觸發
+            <section key={section.id} id={section.id} className="py-16 relative">
               <div className="flex items-baseline justify-between mb-8 px-6">
                 <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
                 <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
               </div>
 
-              {/* 左右導覽按鈕 */}
+              {/* 左右導覽按鈕改用獨立的 hover 控制邏輯或 CSS */}
               {section.data.length > 0 && (
-                <>
+                <div className="hidden md:block">
                   <button 
                     onClick={() => scrollContainer(sectionRef, 'left')}
-                    className="absolute left-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white hidden md:block"
+                    className="absolute left-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 hover:bg-black hover:text-white transition-all duration-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                   </button>
                   <button 
                     onClick={() => scrollContainer(sectionRef, 'right')}
-                    className="absolute right-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white hidden md:block"
+                    className="absolute right-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 hover:bg-black hover:text-white transition-all duration-300"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                   </button>
-                </>
+                </div>
               )}
 
               <div 
