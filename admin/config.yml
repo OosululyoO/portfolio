@@ -3,6 +3,8 @@ backend:
   repo: OosululyoO/portfolio
   branch: main
 
+local_backend: true
+
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
@@ -38,9 +40,24 @@ collections:
     fields:
       - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
+      
+      # 1. 主要照片 (用於主頁輪播)
+      - label: "Main Images (主頁輪播照片)"
+        name: "main_images"
+        widget: "list"
+        summary: "{{fields.image}}"
+        field: { label: "Image", name: "image", widget: "image" }
+
+      # 2. 額外照片 (顯示在詳細內容末尾)
+      - label: "Extra Images (詳細頁末尾照片)"
+        name: "extra_images"
+        widget: "list"
+        required: false
+        field: { label: "Image", name: "image", widget: "image" }
+      
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
+
 
   # 3. Achievements (競賽獎項)
   - name: "achievements"
@@ -49,9 +66,23 @@ collections:
     create: true
     slug: "{{slug}}"
     fields:
-      - { label: "Award Name", name: "title", widget: "string" }
+      - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Award Image", name: "thumbnail", widget: "image", required: false }
+      
+      # 1. 主要照片 (用於主頁輪播)
+      - label: "Main Images (主頁輪播照片)"
+        name: "main_images"
+        widget: "list"
+        summary: "{{fields.image}}"
+        field: { label: "Image", name: "image", widget: "image" }
+
+      # 2. 額外照片 (顯示在詳細內容末尾)
+      - label: "Extra Images (詳細頁末尾照片)"
+        name: "extra_images"
+        widget: "list"
+        required: false
+        field: { label: "Image", name: "image", widget: "image" }
+      
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
@@ -62,9 +93,23 @@ collections:
     create: true
     slug: "{{slug}}"
     fields:
-      - { label: "Event Name", name: "title", widget: "string" }
+      - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Event Image", name: "thumbnail", widget: "image", required: false }
+      
+      # 1. 主要照片 (用於主頁輪播)
+      - label: "Main Images (主頁輪播照片)"
+        name: "main_images"
+        widget: "list"
+        summary: "{{fields.image}}"
+        field: { label: "Image", name: "image", widget: "image" }
+
+      # 2. 額外照片 (顯示在詳細內容末尾)
+      - label: "Extra Images (詳細頁末尾照片)"
+        name: "extra_images"
+        widget: "list"
+        required: false
+        field: { label: "Image", name: "image", widget: "image" }
+      
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
