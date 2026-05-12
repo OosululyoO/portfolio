@@ -1,7 +1,12 @@
+// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+// import content from '@originjs/vite-plugin-content' // 暫時註解掉
 
 export default defineConfig({
-  plugins: [react()],
-  base: '/portfolio/', // 這裡必須與 https://oosululyoo.github.io/portfolio/ 一致
+  plugins: [
+    react(),
+    // content() // 暫時註解掉，因為我們手動處理了 .md 和 .yml
+  ],
+  base: '/portfolio/',
 })

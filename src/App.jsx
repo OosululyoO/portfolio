@@ -4,18 +4,23 @@ import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
-// --- Utility: 修正 GitHub Pages 路徑解析 ---
+// --- Utility: 修正 GitHub Pages 路徑解析 ---// --- Utility: 強化版內容讀取器 ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
-    const rawContent = modules[path].default || modules[path];
-    if (!rawContent) return null;
+    // 修正：增加多層判斷，確保抓到純文字內容
+    const mod = modules[path];
+    const rawContent = typeof mod === 'string' ? mod : (mod.default || mod);
+    
+    if (!rawContent || typeof rawContent !== 'string') {
+      console.warn("跳過無效內容:", path);
+      return null;
+    }
 
     const parts = rawContent.split('---');
     if (parts.length >= 3) {
       try {
         const frontmatter = yaml.load(parts[1]);
         const body = parts.slice(2).join('---').trim();
-        // 修正 Slug 取得方式，確保在 Production 環境下路徑正確
         const slug = path.split('/').pop().replace('.md', '');
 
         const normalizeImages = (imgData) => {
@@ -40,7 +45,6 @@ const loadContent = (modules) => {
     return null;
   }).filter(Boolean);
 };
-
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
@@ -125,6 +129,7 @@ export default function App() {
     setPortfolio(loadContent(portfolioModules));
     setAchievements(loadContent(achievementModules));
     setActivities(loadContent(activityModules));
+    console.log("Portfolio Data:", loadedPortfolio); 
     setAbout(loadContent(aboutModules));
   }, []);
 
