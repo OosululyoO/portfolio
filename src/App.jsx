@@ -4,18 +4,20 @@ import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
-// --- Utility: 通用內容讀取器 (強化路徑與 GitHub Pages 相容性) ---
+// --- Utility: 修正 GitHub Pages 路徑解析 ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
-    const rawContent = modules[path].default;
+    const rawContent = modules[path].default || modules[path];
+    if (!rawContent) return null;
+
     const parts = rawContent.split('---');
     if (parts.length >= 3) {
       try {
         const frontmatter = yaml.load(parts[1]);
         const body = parts.slice(2).join('---').trim();
+        // 修正 Slug 取得方式，確保在 Production 環境下路徑正確
         const slug = path.split('/').pop().replace('.md', '');
 
-        // 處理 Decap CMS 的圖片列表格式 [{image: "..."}] 轉為 ["..."]
         const normalizeImages = (imgData) => {
           if (!imgData) return [];
           return Array.isArray(imgData) 
@@ -39,7 +41,6 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 通用組件: ContentCard (具備小外框與互動感) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
@@ -68,7 +69,6 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
         ) : (
           <div className="flex items-center justify-center h-full text-slate-300 font-[900] italic bg-slate-50 uppercase">NO IMAGE</div>
         )}
-        
         {images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
@@ -76,9 +76,7 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
             ))}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
-
       <div className="px-3 pb-4 flex-grow">
         {category && (
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50/50 px-3 py-1 rounded-full inline-block mb-3 border border-blue-100/30">
@@ -88,22 +86,18 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
         <h3 className="text-xl md:text-2xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
           {title}
         </h3>
-        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80 group-hover:opacity-100">
-          {description}
-        </p>
+        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80">{description}</p>
       </div>
     </div>
   );
 };
 
-// --- 主程式: App (預設匯出) ---
 export default function App() {
-  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '正在載入個人簡介...' });
+  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: 'Loading...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
   const [about, setAbout] = useState([]);
-  
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -113,11 +107,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    // ⚠️ 關鍵：使用相對路徑以適應 GitHub Pages 的子目錄部署
+    // 確保使用相對路徑
     const heroModule = import.meta.glob('./content/settings/hero.yml', { query: '?raw', eager: true });
     const heroPath = Object.keys(heroModule)[0];
     if (heroPath) {
-      try { setHero(yaml.load(heroModule[heroPath].default)); } catch (e) { console.error(e); }
+      try {
+        const rawHero = heroModule[heroPath].default || heroModule[heroPath];
+        setHero(yaml.load(rawHero));
+      } catch (e) { console.error(e); }
     }
 
     const portfolioModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
@@ -135,9 +132,7 @@ export default function App() {
     <div className="min-h-screen bg-[#fcfdfe] font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
       <ParticleBackground />
       <Navbar />
-      
       <main className="relative pt-32 px-6 max-w-7xl mx-auto">
-        {/* --- Hero Section --- */}
         <section className="py-24">
           <div className="max-w-4xl">
             <h1 className="text-6xl md:text-[8rem] font-[900] tracking-tighter leading-[0.85] mb-12">
@@ -146,13 +141,12 @@ export default function App() {
                 {hero.titleAccent}
               </span>
             </h1>
-            <p className="text-xl md:text-3xl text-slate-500 font-medium max-w-2xl leading-tight opacity-90">
+            <p className="text-xl md:text-3xl text-slate-500 font-medium max-w-2xl leading-tight">
               {hero.heroDescription}
             </p>
           </div>
         </section>
 
-        {/* --- 內容區塊渲染 --- */}
         {[
           { id: 'about', title: 'About', data: about },
           { id: 'portfolio', title: 'Portfolio', data: portfolio },
@@ -164,18 +158,11 @@ export default function App() {
               <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
               <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
             </div>
-
-            {/* 大區塊美化外筐 */}
             <div className="bg-slate-50/50 backdrop-blur-sm border border-slate-100/50 rounded-[4rem] p-6 md:p-10">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {section.data.map((item) => (
                   <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
                 ))}
-                {section.data.length === 0 && (
-                  <div className="col-span-full py-20 text-center text-slate-400 font-medium italic opacity-60">
-                    目前尚無內容，請至後台新增
-                  </div>
-                )}
               </div>
             </div>
           </section>
@@ -185,12 +172,7 @@ export default function App() {
           <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU JIN AN</p>
         </footer>
       </main>
-
-      <DetailModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        content={selectedItem} 
-      />
+      <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={selectedItem} />
     </div>
   );
 }

@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main] # 或是你的主分支名稱
+    branches: [main] # 如果你的主分支叫 master，請改為 master
 
 permissions:
   contents: read
@@ -23,6 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Install and Build
+        # 這裡就是執行 npm run build 並產生 dist 資料夾
         run: |
           npm install
           npm run build
@@ -31,6 +32,7 @@ jobs:
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
+        # 將打包好的 dist 資料夾上傳為 GitHub Pages 產物
         uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
