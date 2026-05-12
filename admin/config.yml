@@ -1,8 +1,11 @@
 backend:
   name: github
-  repo: OosululyoO/portfolio # 例如: jinan-liu/portfolio-web
+  repo: OosululyoO/portfolio
   branch: main
-site_domain: exquisite-monstera-969273.netlify.app
+  # 這是關鍵的一行，請填寫你修改後的 Netlify 完整網址
+  site_domain: oosululyoo-portfolio.netlify.app
+  # 如果你想要在本地開發時也能登入，可以加上這行（選填）
+  base_url: https://api.netlify.com
 
 media_folder: "public/images/uploads" # 圖片上傳後的存放路徑
 public_folder: "/images/uploads"      # 程式碼中引用圖片的網址路徑
