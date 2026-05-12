@@ -1,12 +1,11 @@
-// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-// import content from '@originjs/vite-plugin-content' // 暫時註解掉
+import tailwindcss from '@tailwindcss/vite' // 1. 引入 Tailwind 外掛
 
 export default defineConfig({
   plugins: [
     react(),
-    // content() // 暫時註解掉，因為我們手動處理了 .md 和 .yml
+    tailwindcss(), // 2. 啟動 Tailwind 外掛
   ],
-  base: '/portfolio/',
+  base: '/portfolio/', 
 })
