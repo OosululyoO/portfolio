@@ -5,40 +5,65 @@ backend:
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
+# ... backend 等設定保持不變 ...
 
 collections:
-  # 1. Portfolio: 加入 Tags 方便分類顯示
+  # 新增：分類管理設定 (全域)
+  - name: "settings"
+    label: "Global Settings (全域設定)"
+    files:
+      - name: "categories"
+        label: "Categories Management (分類管理)"
+        file: "src/content/settings/categories.yml"
+        fields:
+          - label: "Portfolio Categories"
+            name: "portfolio_cats"
+            widget: "list"
+            field: { label: "Category Name", name: "name", widget: "string" }
+          - label: "Achievement Categories"
+            name: "achievement_cats"
+            widget: "list"
+            field: { label: "Category Name", name: "name", widget: "string" }
+          - label: "Activity Categories"
+            name: "activity_cats"
+            widget: "list"
+            field: { label: "Category Name", name: "name", widget: "string" }
+
+  # 修改：Portfolio (將 category 改為從上述列表選取)
   - name: "portfolio"
     label: "Portfolio (作品)"
     folder: "src/content/portfolio"
     create: true
-    slug: "{{slug}}"
     fields:
       - { label: "Title", name: "title", widget: "string" }
-      - { label: "Category", name: "category", widget: "select", options: ["AIoT", "Software"] }
+      - label: "Category"
+        name: "category"
+        widget: "relation" # 使用關聯組件
+        collection: "settings"
+        file: "categories"
+        search_fields: ["portfolio_cats.*.name"]
+        display_fields: ["portfolio_cats.*.name"]
+        value_field: "portfolio_cats.*.name"
+        required: false # 設為選配
       - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
-      - { label: "Short Description", name: "description", widget: "string" } # 修改此處以對應前端
-      - { label: "Tags", name: "tags", widget: "list", default: ["ESP32", "React"] }
+      - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 2. Achievements: 統一年份與描述欄位
+  # 修改：Achievements (同樣加入選配 Category)
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
     create: true
     fields:
       - { label: "Award Name", name: "title", widget: "string" }
-      - { label: "Organization", name: "organization", widget: "string" }
-      - { label: "Year", name: "year", widget: "string", hint: "例如: 2025" } # 修改此處
-      - { label: "Summary", name: "description", widget: "text" } # 修改此處
-      - { label: "Certificate Image", name: "image", widget: "image", required: false }
-
-  # 3. Activities: 活動紀錄
-  - name: "activities"
-    label: "Activities (活動紀錄)"
-    folder: "src/content/activities"
-    create: true
-    fields:
-      - { label: "Event Name", name: "title", widget: "string" }
-      - { label: "Date", name: "date", widget: "datetime" }
-      - { label: "Content", name: "body", widget: "markdown" }
+      - label: "Category"
+        name: "category"
+        widget: "relation"
+        collection: "settings"
+        file: "categories"
+        search_fields: ["achievement_cats.*.name"]
+        display_fields: ["achievement_cats.*.name"]
+        value_field: "achievement_cats.*.name"
+        required: false
+      - { label: "Year", name: "year", widget: "string" }
+      - { label: "Summary", name: "description", widget: "text" }
