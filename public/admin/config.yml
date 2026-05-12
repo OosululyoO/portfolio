@@ -74,9 +74,4 @@ collections:
     label: "About (關於我資料)"
     folder: "src/content/about"
     create: true
-    fields:
-      - { label: "Section Title", name: "title", widget: "string" }
-      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Profile Image", name: "thumbnail", widget: "image", required: false }
-      - { label: "Short Bio", name: "description", widget: "string" }
-      - { label: "Full Content", name: "body", widget: "markdown" }
+    fields: *common_fields
