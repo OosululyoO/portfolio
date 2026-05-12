@@ -70,9 +70,14 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
 
   useEffect(() => {
     if (images.length <= 1) return;
+
+    // 關鍵修正：產生 3000ms ~ 6000ms 之間的隨機時間，讓切換錯開
+    const randomInterval = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
+
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, 3000); // 還原為 3000ms
+    }, randomInterval);
+
     return () => clearInterval(interval);
   }, [images]);
 
@@ -189,31 +194,43 @@ export default function App() {
           </div>
         </section>
 
-        {/* 還原原本的列表渲染樣式 */}
-        {[
-          { id: 'about', title: 'About', data: about },
-          { id: 'portfolio', title: 'Portfolio', data: portfolio },
-          { id: 'achievements', title: 'Achievements', data: achievements },
-          { id: 'activities', title: 'Activities', data: activities }
-        ].map(section => (
-          <section key={section.id} id={section.id} className="py-16">
-            <div className="flex items-baseline justify-between mb-8">
-              <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
-              <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
-            </div>
+// 在 App.jsx 內的 return 部分尋找渲染 section 的 map
+{[
+  { id: 'about', title: 'About', data: about },
+  { id: 'portfolio', title: 'Portfolio', data: portfolio },
+  { id: 'achievements', title: 'Achievements', data: achievements },
+  { id: 'activities', title: 'Activities', data: activities }
+].map(section => (
+  <section key={section.id} id={section.id} className="py-16">
+    <div className="flex items-baseline justify-between mb-8">
+      <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
+      <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
+    </div>
 
-            <div className="bg-slate-50/50 backdrop-blur-sm border border-slate-100/50 rounded-[4rem] p-6 md:p-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {section.data.map((item) => (
-                  <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
-                ))}
-              </div>
-              {section.data.length === 0 && (
-                <div className="py-10 text-center text-slate-400 italic">暫無內容</div>
-              )}
-            </div>
-          </section>
+    {/* 關鍵修正：加入 overflow-x-auto 與 snap-x 讓內容在超過寬度時可輪播 */}
+    <div className="relative group">
+      <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar scroll-smooth">
+        {section.data.map((item) => (
+          <div key={item.slug} className="min-w-[85vw] md:min-w-0 snap-center">
+            <ContentCard {...item} onClick={() => handleOpenModal(item)} />
+          </div>
         ))}
+        {section.data.length === 0 && (
+          <div className="w-full py-10 text-center text-slate-400 italic">暫無內容</div>
+        )}
+      </div>
+      
+      {/* 提示箭頭 (可選) */}
+      {section.data.length > 3 && (
+        <div className="hidden lg:block absolute -right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="p-2 bg-white shadow-lg rounded-full text-blue-600">
+             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+          </div>
+        </div>
+      )}
+    </div>
+  </section>
+))}
 
 <footer className="py-24 text-center border-t border-slate-100/50 mt-20">
           <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">

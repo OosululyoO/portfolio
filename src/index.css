@@ -4,3 +4,13 @@
   /* 覆蓋預設的 sans 字體，符合現代極簡規範 */
   --font-sans: "Inter", sans-serif;
 }
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
