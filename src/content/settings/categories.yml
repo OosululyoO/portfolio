@@ -1,5 +1,6 @@
-portfolio_cats:
+all_categories:
   - name: "AIoT"
   - name: "Software"
-achievement_cats:
-  - name: "Innovation"
+  - name: "Embedded System"
+  - name: "Competition"
+  - name: "Workshop"
