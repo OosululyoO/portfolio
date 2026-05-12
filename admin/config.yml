@@ -6,11 +6,10 @@ backend:
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 # ... backend 等設定保持不變 ...
-# ... backend 等設定保持不變 ...
-# ... backend 等設定保持不變 ...
+
 
 collections:
-  # 1. 全域設定 (通用分類)
+  # 1. 全域設定
   - name: "settings"
     label: "Global Settings (全域設定)"
     files:
@@ -23,62 +22,38 @@ collections:
             widget: "list"
             field: { label: "Category Name", name: "name", widget: "string" }
 
-  # 2. Portfolio (作品)
+  # 2. Portfolio
   - name: "portfolio"
     label: "Portfolio (作品)"
     folder: "src/content/portfolio"
     create: true
     fields:
       - { label: "Title", name: "title", widget: "string" }
-      - label: "Category"
-        name: "category"
-        widget: "relation"
-        collection: "settings"
-        file: "categories"
-        search_fields: ["all_categories.*.name"]
-        display_fields: ["all_categories.*.name"]
-        value_field: "all_categories.*.name"
-        required: false
+      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
       - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 3. Achievements (競賽獎項)
+  # 3. Achievements
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
     create: true
     fields:
       - { label: "Award Name", name: "title", widget: "string" }
-      - label: "Category"
-        name: "category"
-        widget: "relation"
-        collection: "settings"
-        file: "categories"
-        search_fields: ["all_categories.*.name"]
-        display_fields: ["all_categories.*.name"]
-        value_field: "all_categories.*.name"
-        required: false
+      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
       - { label: "Award Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 4. Activities (活動紀錄)
+  # 4. Activities
   - name: "activities"
     label: "Activities (活動紀錄)"
     folder: "src/content/activities"
     create: true
     fields:
       - { label: "Event Name", name: "title", widget: "string" }
-      - { label: "Category"
-        name: "category"
-        widget: "relation"
-        collection: "settings"
-        file: "categories"
-        search_fields: ["all_categories.*.name"]
-        display_fields: ["all_categories.*.name"]
-        value_field: "all_categories.*.name"
-        required: false
+      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
       - { label: "Event Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
