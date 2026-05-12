@@ -4,33 +4,20 @@ import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
-// --- Utility: 處理靜態資源路徑 (修復 GitHub Pages 子路徑問題) ---
+// --- Utility: 處理靜態資源路徑 ---
 const getAssetPath = (path) => {
   if (!path) return '';
-  // 如果是外部連結 (http/https)，直接回傳
   if (path.startsWith('http')) return path;
-  
-  // 移除路徑開頭的斜線，避免拼接時出現雙斜線
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  
-  // 取得 Vite 設定的 base 路徑 (生產環境為 /portfolio/)
-  // 這裡硬編碼為 /portfolio/ 確保萬無一失，或使用 import.meta.env.BASE_URL
   const base = '/portfolio/'; 
-  
   return `${base}${cleanPath}`;
 };
 
-// --- Utility: 強化版內容讀取器 (相容生產環境) ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
     const mod = modules[path];
-    // 關鍵修正：Vite 在生產環境有時會將內容放在 .default，有時則是純字串
     const rawContent = typeof mod === 'string' ? mod : (mod?.default || mod);
-    
-    if (!rawContent || typeof rawContent !== 'string') {
-      console.warn("無法讀取內容或格式錯誤:", path);
-      return null;
-    }
+    if (!rawContent || typeof rawContent !== 'string') return null;
 
     const parts = rawContent.split('---');
     if (parts.length >= 3) {
@@ -38,101 +25,76 @@ const loadContent = (modules) => {
         const frontmatter = yaml.load(parts[1]);
         const body = parts.slice(2).join('---').trim();
         const slug = path.split('/').pop().replace('.md', '');
-
-        // 統一處理 Decap CMS 可能產生的圖片路徑格式
         const normalizeImages = (imgData) => {
           if (!imgData) return [];
-          return Array.isArray(imgData) 
-            ? imgData.map(item => (typeof item === 'object' ? item.image : item))
-            : [imgData];
+          return Array.isArray(imgData) ? imgData.map(item => (typeof item === 'object' ? item.image : item)) : [imgData];
         };
-
-        return { 
-          ...frontmatter, 
-          main_images: normalizeImages(frontmatter.main_images),
-          extra_images: normalizeImages(frontmatter.extra_images),
-          body, 
-          slug 
-        };
-      } catch (e) {
-        console.error("YAML 解析失敗:", path, e);
-        return null;
-      }
+        return { ...frontmatter, main_images: normalizeImages(frontmatter.main_images), extra_images: normalizeImages(frontmatter.extra_images), body, slug };
+      } catch (e) { return null; }
     }
     return null;
   }).filter(Boolean);
 };
 
-// --- 子組件: 內容卡片 (還原原本樣式) ---
+// --- 子組件: 內容卡片 (加入隨機輪播與 Read more) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
 
   useEffect(() => {
     if (images.length <= 1) return;
-
-    // 關鍵修正：產生 3000ms ~ 6000ms 之間的隨機時間，讓切換錯開
-    const randomInterval = Math.floor(Math.random() * (6000 - 3000 + 1)) + 3000;
-
+    // 1. 隨機輪播時間 (3s - 6s)
+    const randomTime = Math.floor(Math.random() * 3000) + 3000;
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, randomInterval);
-
+    }, randomTime);
     return () => clearInterval(interval);
   }, [images]);
 
   return (
     <div 
-      className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out" 
+      className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out snap-center" 
       onClick={onClick}
     >
       <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 bg-slate-50 border border-slate-50 shadow-inner group-hover:-translate-y-1 transition-transform duration-500">
         {images.length > 0 ? (
-          <img 
-            key={images[currentImageIndex]} 
-            src={getAssetPath(images[currentImageIndex])} // 關鍵：套用路徑轉換
-            alt={title} 
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          />
+          <img key={images[currentImageIndex]} src={getAssetPath(images[currentImageIndex])} alt={title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-300 font-black italic bg-slate-50 uppercase">NO IMAGE</div>
         )}
-        
-        {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
-            {images.map((_, i) => (
-              <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'w-5 bg-white' : 'w-1 bg-white/40'}`} />
-            ))}
-          </div>
-        )}
       </div>
 
-      <div className="px-3 pb-4 flex-grow">
+      <div className="px-3 pb-4 flex-grow flex flex-col">
         {category && (
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50/50 px-3 py-1 rounded-full inline-block mb-3 border border-blue-100/30">
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50/50 px-3 py-1 rounded-full inline-block mb-3 border border-blue-100/30 self-start">
             {category}
           </span>
         )}
-        <h3 className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
+        <h3 className="text-xl font-black tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
           {title}
         </h3>
-        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80 group-hover:opacity-100">
+        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80 mb-6">
           {description}
         </p>
+        
+        {/* Read more 按鈕 */}
+        <div className="mt-auto pt-4 flex items-center text-[10px] font-black tracking-[0.2em] text-blue-600 uppercase">
+          Read More
+          <svg className="w-3 h-3 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </div>
       </div>
     </div>
   );
 };
 
-// --- 主組件: App ---
 export default function App() {
-  // 還原原本的 Hero 初始狀態與邏輯
   const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '載入中...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
   const [about, setAbout] = useState([]);
-  
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -142,45 +104,31 @@ export default function App() {
   };
 
   useEffect(() => {
-    // 載入 Hero 設定 (還原原本邏輯)
     const heroModule = import.meta.glob('./content/settings/hero.yml', { query: '?raw', eager: true });
     const heroPath = Object.keys(heroModule)[0];
     if (heroPath) {
-      try {
-        const mod = heroModule[heroPath];
-        const rawHero = typeof mod === 'string' ? mod : (mod?.default || mod);
-        setHero(yaml.load(rawHero));
-      } catch (e) { console.error("Hero 解析失敗:", e); }
+      const mod = heroModule[heroPath];
+      setHero(yaml.load(typeof mod === 'string' ? mod : (mod?.default || mod)));
     }
 
-    // 載入各類 Markdown 模組
     const pModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
     const acModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
     const actModules = import.meta.glob('./content/activities/*.md', { query: '?raw', eager: true });
     const abModules = import.meta.glob('./content/about/*.md', { query: '?raw', eager: true });
 
-    // 解析資料
-    const pData = loadContent(pModules);
-    const acData = loadContent(acModules);
-    const actData = loadContent(actModules);
-    const abData = loadContent(abModules);
-
-    // 更新狀態
-    setPortfolio(pData);
-    setAchievements(acData);
-    setActivities(actData);
-    setAbout(abData);
+    setPortfolio(loadContent(pModules));
+    setAchievements(loadContent(acModules));
+    setActivities(loadContent(actModules));
+    setAbout(loadContent(abModules));
   }, []);
 
   return (
-    // 還原原本的背景色與字體設定
     <div className="min-h-screen bg-[#fcfdfe] font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
       <ParticleBackground />
       <Navbar />
       
-      <main className="relative pt-32 px-6 max-w-7xl mx-auto">
-        {/* 還原原本的 Hero Section 樣式 */}
-        <section className="py-24">
+      <main className="relative pt-32 px-0 max-w-7xl mx-auto overflow-hidden">
+        <section className="py-24 px-6">
           <div className="max-w-4xl">
             <h1 className="text-6xl md:text-[8rem] font-black tracking-tighter leading-[0.85] mb-12">
               {hero.titleLine1} <br />
@@ -194,57 +142,38 @@ export default function App() {
           </div>
         </section>
 
-// 在 App.jsx 內的 return 部分尋找渲染 section 的 map
-{[
-  { id: 'about', title: 'About', data: about },
-  { id: 'portfolio', title: 'Portfolio', data: portfolio },
-  { id: 'achievements', title: 'Achievements', data: achievements },
-  { id: 'activities', title: 'Activities', data: activities }
-].map(section => (
-  <section key={section.id} id={section.id} className="py-16">
-    <div className="flex items-baseline justify-between mb-8">
-      <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
-      <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
-    </div>
+        {[
+          { id: 'about', title: 'About', data: about },
+          { id: 'portfolio', title: 'Portfolio', data: portfolio },
+          { id: 'achievements', title: 'Achievements', data: achievements },
+          { id: 'activities', title: 'Activities', data: activities }
+        ].map(section => (
+          <section key={section.id} id={section.id} className="py-16">
+            <div className="flex items-baseline justify-between mb-8 px-6">
+              <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
+              <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
+            </div>
 
-    {/* 關鍵修正：加入 overflow-x-auto 與 snap-x 讓內容在超過寬度時可輪播 */}
-    <div className="relative group">
-      <div className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto pb-8 snap-x snap-mandatory no-scrollbar scroll-smooth">
-        {section.data.map((item) => (
-          <div key={item.slug} className="min-w-[85vw] md:min-w-0 snap-center">
-            <ContentCard {...item} onClick={() => handleOpenModal(item)} />
-          </div>
+            {/* 3. 調整輪播佈局：兩側留白露出鄰近項目 */}
+            <div className="flex gap-6 overflow-x-auto pb-10 px-6 snap-x snap-mandatory no-scrollbar scroll-smooth">
+              {section.data.map((item) => (
+                <div key={item.slug} className="min-w-[85%] md:min-w-[45%] lg:min-w-[30%] snap-center">
+                  <ContentCard {...item} onClick={() => handleOpenModal(item)} />
+                </div>
+              ))}
+              {section.data.length === 0 && (
+                <div className="w-full py-10 text-center text-slate-400 italic">暫無內容</div>
+              )}
+            </div>
+          </section>
         ))}
-        {section.data.length === 0 && (
-          <div className="w-full py-10 text-center text-slate-400 italic">暫無內容</div>
-        )}
-      </div>
-      
-      {/* 提示箭頭 (可選) */}
-      {section.data.length > 3 && (
-        <div className="hidden lg:block absolute -right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="p-2 bg-white shadow-lg rounded-full text-blue-600">
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
-          </div>
-        </div>
-      )}
-    </div>
-  </section>
-))}
 
-<footer className="py-24 text-center border-t border-slate-100/50 mt-20">
-          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">
-            © 2026 LIU CHIN AN — ALL RIGHTS RESERVED
-          </p>
+        <footer className="py-24 text-center border-t border-slate-100/50 mt-20">
+          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU CHIN AN — ALL RIGHTS RESERVED</p>
         </footer>
       </main>
 
-      {/* DetailModal 保持原本的呼叫方式，圖片路徑處理應在 Modal 內部或傳遞前完成 */}
-      <DetailModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        content={selectedItem} // 原本使用 content 屬性
-      />
+      <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={selectedItem} />
     </div>
   );
 }
