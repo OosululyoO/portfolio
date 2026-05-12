@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Utility: 處理靜態資源路徑 (與 App.jsx 保持一致) ---
+// --- Utility: 處理靜態資源路徑 ---
 const getAssetPath = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -31,7 +31,7 @@ const DetailModal = ({ isOpen, onClose, content }) => {
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] cursor-zoom-out"
           />
 
-          {/* 視窗主體 */}
+          {/* 視窗主體 - 已修正標籤閉合 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -94,7 +94,7 @@ const DetailModal = ({ isOpen, onClose, content }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div> {/* 此處已補上結束標籤 */}
         </>
       )}
     </AnimatePresence>
