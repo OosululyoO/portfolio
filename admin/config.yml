@@ -5,16 +5,20 @@ backend:
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
-# ... backend 等設定保持不變 ...
-
-
-# ... backend 與 media_folder 保持不變 ...
 
 collections:
-  # 1. 全域設定 (包含通用分類與首頁文字管理)
+  # 1. Global Settings (對應 Home 的文字與全域分類)
   - name: "settings"
     label: "Global Settings (全域設定)"
     files:
+      - name: "hero"
+        label: "Homepage Hero (首頁文字設定)"
+        file: "src/content/settings/hero.yml"
+        fields:
+          - { label: "Main Title", name: "titleLine1", widget: "string" }
+          - { label: "Accent Title", name: "titleAccent", widget: "string" }
+          - { label: "Hero Description", name: "heroDescription", widget: "text" }
+      
       - name: "categories"
         label: "Categories Management (分類管理)"
         file: "src/content/settings/categories.yml"
@@ -23,29 +27,21 @@ collections:
             name: "all_categories"
             widget: "list"
             field: { label: "Category Name", name: "name", widget: "string" }
-      
-      - name: "hero"
-        label: "Homepage Hero (首頁文字設定)"
-        file: "src/content/settings/hero.yml"
-        fields:
-          - { label: "Main Title (第一行)", name: "titleLine1", widget: "string" }
-          - { label: "Accent Title (漸層行)", name: "titleAccent", widget: "string" }
-          - { label: "Description (個人簡介)", name: "heroDescription", widget: "text" }
 
-  # 2. About (關於我) - 採用與 Portfolio 一樣的結構
-  - name: "about"
-    label: "About (關於我資料)"
-    folder: "src/content/about"
+  # 2. Portfolio (作品)
+  - name: "portfolio"
+    label: "Portfolio (作品)"
+    folder: "src/content/portfolio"
     create: true
+    slug: "{{slug}}"
     fields:
-      - { label: "Section Title", name: "title", widget: "string" }
+      - { label: "Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      - { label: "Profile Image", name: "thumbnail", widget: "image", required: false }
-      - { label: "Short Bio", name: "description", widget: "string" }
+      - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
+      - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-
-  # 3. Achievements
+  # 3. Achievements (競賽獎項)
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
@@ -57,7 +53,7 @@ collections:
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 4. Activities
+  # 4. Activities (活動紀錄)
   - name: "activities"
     label: "Activities (活動紀錄)"
     folder: "src/content/activities"
@@ -67,4 +63,16 @@ collections:
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
       - { label: "Event Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Short Description", name: "description", widget: "string" }
+      - { label: "Full Content", name: "body", widget: "markdown" }
+
+  # 5. About (關於我)
+  - name: "about"
+    label: "About (關於我資料)"
+    folder: "src/content/about"
+    create: true
+    fields:
+      - { label: "Section Title", name: "title", widget: "string" }
+      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
+      - { label: "Profile Image", name: "thumbnail", widget: "image", required: false }
+      - { label: "Short Bio", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
