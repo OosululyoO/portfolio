@@ -10,10 +10,10 @@ const loadContent = (modules) => {
     const parts = rawContent.split('---');
     if (parts.length >= 3) {
       try {
-        const data = yaml.load(parts[1]);
-        // 自動生成 slug (檔案名稱)，方便未來擴充路由
+        const frontmatter = yaml.load(parts[1]);
+        const body = parts.slice(2).join('---').trim(); // 取得 Markdown 主體內容
         const slug = path.split('/').pop().replace('.md', '');
-        return { ...data, slug };
+        return { ...frontmatter, body, slug };
       } catch (e) {
         console.error("YAML 解析失敗:", path, e);
         return null;
@@ -22,17 +22,11 @@ const loadContent = (modules) => {
     return null;
   }).filter(Boolean);
 };
-/**
- * PortfolioCard 組件
- * @param {string} title - 作品標題
- * @param {string} category - 分類 (選配)
- * @param {string} thumbnail - 縮圖路徑 (選配)
- * @param {string} description - 簡短描述
- * @param {array} tags - 技術標籤 (選配，預期為字串陣列)
- */
-const PortfolioCard = ({ title, category, thumbnail, description, tags }) => (
+
+// --- 通用組件: ContentCard ---
+// 適用於作品、競賽、活動，統一顯示：TITLE, CATEGORY, IMAGE, SHORT DESCRIPTION
+const ContentCard = ({ title, category, thumbnail, description }) => (
   <div className="group cursor-pointer">
-    {/* 圖片容器 - 增加 Aspect Ratio 與外框細節 */}
     <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6 bg-slate-200 shadow-inner border border-slate-100">
       {thumbnail ? (
         <img 
@@ -41,33 +35,20 @@ const PortfolioCard = ({ title, category, thumbnail, description, tags }) => (
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
         />
       ) : (
-        <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase tracking-tighter bg-slate-100">
+        <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase tracking-tighter bg-slate-50">
           No Image
         </div>
       )}
-      
-      {/* 懸浮遮罩 (Overlay) - 預留給 Lightbox 觸發或詳情跳轉 */}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-         <span className="text-white font-black text-xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-           View Project
+      {/* 懸浮遮罩 */}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+         <span className="text-white font-black text-xl mb-1 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+           Read More
          </span>
-         
-         {/* 如果有 Tags 則顯示在前三項 */}
-         {tags && tags.length > 0 && (
-           <div className="flex flex-wrap gap-2 mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
-              {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="text-[10px] text-white/90 border border-white/20 px-2 py-0.5 rounded-full uppercase tracking-widest bg-white/10 backdrop-blur-md">
-                  {tag}
-                </span>
-              ))}
-           </div>
-         )}
       </div>
     </div>
 
-    {/* 文字內容區塊 */}
     <div className="px-2">
-      {/* Category 選配邏輯：只有存在時才渲染標籤 */}
+      {/* 選配 GATEGORY */}
       {category && (
         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">
           {category}
@@ -85,40 +66,20 @@ const PortfolioCard = ({ title, category, thumbnail, description, tags }) => (
   </div>
 );
 
-// --- 子組件: AchievementCard ---
-const AchievementCard = ({ title, year, description, organization }) => (
-  <div className="group relative p-8 bg-white border border-slate-200 rounded-[2rem] hover:border-blue-500/50 transition-all duration-500 shadow-sm hover:shadow-2xl">
-    <div className="flex justify-between items-start mb-6">
-      <div className="flex items-center gap-3">
-        <span className="text-blue-600 font-black text-2xl tracking-tighter">/ {year}</span>
-        <div className="h-px w-8 bg-blue-100 group-hover:w-12 transition-all duration-500"></div>
-      </div>
-      {organization && (
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100">
-          {organization}
-        </span>
-      )}
-    </div>
-    <h4 className="text-2xl font-black tracking-tight text-slate-800 mb-3 group-hover:text-blue-600 transition-colors">
-      {title}
-    </h4>
-    <p className="text-slate-500 leading-relaxed font-medium">
-      {description}
-    </p>
-  </div>
-);
-
 function App() {
-  const [projects, setProjects] = useState([]);
+  const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    // 同時抓取不同內容類別
+    // 同時抓取三個不同資料夾的內容
     const portfolioModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
     const achievementModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
+    const activityModules = import.meta.glob('./content/activities/*.md', { query: '?raw', eager: true });
 
-    setProjects(loadContent(portfolioModules));
+    setPortfolio(loadContent(portfolioModules));
     setAchievements(loadContent(achievementModules));
+    setActivities(loadContent(activityModules));
   }, []);
 
   return (
@@ -128,74 +89,60 @@ function App() {
       
       <main className="relative pt-32 px-6 max-w-7xl mx-auto">
         
-        {/* --- Hero Section --- */}
-        <section className="py-24 mb-12">
+        {/* Hero Section */}
+        <section className="py-24">
           <div className="max-w-4xl">
             <h1 className="text-6xl md:text-[9rem] font-[900] tracking-tighter leading-[0.85] mb-12">
-              Building <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-cyan-500 to-indigo-600">
-                Future AIoT.
+              LIU <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-indigo-600">
+                JIN AN.
               </span>
             </h1>
             <p className="text-xl md:text-3xl text-slate-500 font-medium max-w-2xl leading-[1.2]">
-              我是劉晉安，致力於將 <span className="text-slate-950 font-bold underline decoration-blue-500/20 underline-offset-8">AI 邊緣運算</span> 與硬體整合，為生態保育與生理感測提供更直觀的解決方案。
+              國立虎尾科技大學。專注於 <span className="text-slate-950 font-bold underline decoration-blue-500/20 underline-offset-8">AIoT 系統集成</span> 與硬體開發，透過技術實踐生態與生理感測方案。
             </p>
           </div>
         </section>
 
-        {/* --- Portfolio Section --- */}
+        {/* Portfolio Section */}
         <section id="portfolio" className="py-32 border-t border-slate-200">
           <div className="flex items-baseline justify-between mb-20">
-            <div>
-              <h2 className="text-5xl font-black tracking-tighter">Selected Works</h2>
-              <p className="text-slate-400 mt-2 font-bold uppercase tracking-widest text-[10px]">Embedded Systems & Software</p>
-            </div>
+            <h2 className="text-5xl font-black tracking-tighter uppercase">Portfolio</h2>
             <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
-            <div className="text-right">
-              <span className="text-4xl font-black tracking-tighter text-blue-600">{projects.length < 10 ? `0${projects.length}` : projects.length}</span>
-            </div>
+            <span className="text-slate-400 font-bold uppercase tracking-widest text-xs">Total: {portfolio.length}</span>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {projects.length > 0 ? (
-              projects.map((p, i) => <PortfolioCard key={p.slug || i} {...p} />)
-            ) : (
-              <div className="col-span-full py-24 text-center border-2 border-dashed border-slate-200 rounded-[3rem] text-slate-400 font-bold uppercase tracking-widest italic">
-                Awaiting Content...
-              </div>
-            )}
+            {portfolio.map((item) => <ContentCard key={item.slug} {...item} />)}
           </div>
         </section>
 
-        {/* --- Achievements Section --- */}
+        {/* Achievements Section */}
         <section id="achievements" className="py-32 border-t border-slate-200">
-          <div className="max-w-3xl mb-20">
-            <h2 className="text-5xl font-black tracking-tighter mb-4">Achievements</h2>
-            <p className="text-slate-500 text-lg font-medium italic">「技術的價值在於解決真實世界的問題。」</p>
+          <div className="flex items-baseline justify-between mb-20">
+            <h2 className="text-5xl font-black tracking-tighter uppercase">Achievements</h2>
+            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {achievements.length > 0 ? (
-              achievements.map((item, i) => <AchievementCard key={item.slug || i} {...item} />)
-            ) : (
-              // 備用靜態內容（當 Markdown 資料夾尚無內容時顯示）
-              <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-center min-h-[200px]">
-                <p className="text-slate-400 font-bold tracking-widest uppercase text-xs">Loading Achievement Data...</p>
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
+            {achievements.map((item) => <ContentCard key={item.slug} {...item} />)}
           </div>
         </section>
 
-        {/* --- Footer --- */}
+        {/* Activities Section */}
+        <section id="activities" className="py-32 border-t border-slate-200">
+          <div className="flex items-baseline justify-between mb-20">
+            <h2 className="text-5xl font-black tracking-tighter uppercase">Activities</h2>
+            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
+            {activities.map((item) => <ContentCard key={item.slug} {...item} />)}
+          </div>
+        </section>
+
+        {/* Footer */}
         <footer className="py-24 text-center border-t border-slate-100">
           <p className="text-slate-400 text-xs font-black tracking-[0.3em] uppercase">
             © 2026 LIU JIN AN — NFU COMPUTER SCIENCE
           </p>
-          <div className="mt-4 flex justify-center gap-6">
-             <span className="text-[10px] font-bold text-slate-300">VITE 8</span>
-             <span className="text-[10px] font-bold text-slate-300">TAILWIND v4</span>
-             <span className="text-[10px] font-bold text-slate-300">DECAP CMS</span>
-          </div>
         </footer>
       </main>
     </div>
