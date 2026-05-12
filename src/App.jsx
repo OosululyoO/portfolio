@@ -215,9 +215,10 @@ export default function App() {
           </section>
         ))}
 
-        {/* 還原原本的 Footer 樣式 */}
-        <footer className="py-24 text-center border-t border-slate-100/50 mt-20">
-          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU JIN AN</p>
+<footer className="py-24 text-center border-t border-slate-100/50 mt-20">
+          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">
+            © 2026 LIU CHIN AN — ALL RIGHTS RESERVED
+          </p>
         </footer>
       </main>
 
