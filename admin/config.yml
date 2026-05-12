@@ -6,9 +6,10 @@ backend:
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 # ... backend 等設定保持不變 ...
+# ... backend 等設定保持不變 ...
 
 collections:
-  # 新增：分類管理設定 (全域)
+  # 1. 全域設定：簡化為單一通用清單
   - name: "settings"
     label: "Global Settings (全域設定)"
     files:
@@ -16,20 +17,12 @@ collections:
         label: "Categories Management (分類管理)"
         file: "src/content/settings/categories.yml"
         fields:
-          - label: "Portfolio Categories"
-            name: "portfolio_cats"
-            widget: "list"
-            field: { label: "Category Name", name: "name", widget: "string" }
-          - label: "Achievement Categories"
-            name: "achievement_cats"
-            widget: "list"
-            field: { label: "Category Name", name: "name", widget: "string" }
-          - label: "Activity Categories"
-            name: "activity_cats"
+          - label: "All Categories (所有類別)"
+            name: "all_categories"
             widget: "list"
             field: { label: "Category Name", name: "name", widget: "string" }
 
-  # 修改：Portfolio (將 category 改為從上述列表選取)
+  # 2. Portfolio: 關聯到通用清單
   - name: "portfolio"
     label: "Portfolio (作品)"
     folder: "src/content/portfolio"
@@ -38,18 +31,18 @@ collections:
       - { label: "Title", name: "title", widget: "string" }
       - label: "Category"
         name: "category"
-        widget: "relation" # 使用關聯組件
+        widget: "relation"
         collection: "settings"
         file: "categories"
-        search_fields: ["portfolio_cats.*.name"]
-        display_fields: ["portfolio_cats.*.name"]
-        value_field: "portfolio_cats.*.name"
-        required: false # 設為選配
+        search_fields: ["all_categories.*.name"]
+        display_fields: ["all_categories.*.name"]
+        value_field: "all_categories.*.name"
+        required: false
       - { label: "Featured Image", name: "thumbnail", widget: "image", required: false }
       - { label: "Short Description", name: "description", widget: "string" }
       - { label: "Full Content", name: "body", widget: "markdown" }
 
-  # 修改：Achievements (同樣加入選配 Category)
+  # 3. Achievements: 同樣關聯到同一個通用清單
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
@@ -61,9 +54,28 @@ collections:
         widget: "relation"
         collection: "settings"
         file: "categories"
-        search_fields: ["achievement_cats.*.name"]
-        display_fields: ["achievement_cats.*.name"]
-        value_field: "achievement_cats.*.name"
+        search_fields: ["all_categories.*.name"]
+        display_fields: ["all_categories.*.name"]
+        value_field: "all_categories.*.name"
         required: false
       - { label: "Year", name: "year", widget: "string" }
       - { label: "Summary", name: "description", widget: "text" }
+
+  # 4. Activities: 亦同
+  - name: "activities"
+    label: "Activities (活動紀錄)"
+    folder: "src/content/activities"
+    create: true
+    fields:
+      - { label: "Event Name", name: "title", widget: "string" }
+      - label: "Category"
+        name: "category"
+        widget: "relation"
+        collection: "settings"
+        file: "categories"
+        search_fields: ["all_categories.*.name"]
+        display_fields: ["all_categories.*.name"]
+        value_field: "all_categories.*.name"
+        required: false
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Content", name: "body", widget: "markdown" }
