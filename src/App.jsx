@@ -22,10 +22,17 @@ const loadContent = (modules) => {
     return null;
   }).filter(Boolean);
 };
-
-// --- 子組件: PortfolioCard ---
+/**
+ * PortfolioCard 組件
+ * @param {string} title - 作品標題
+ * @param {string} category - 分類 (選配)
+ * @param {string} thumbnail - 縮圖路徑 (選配)
+ * @param {string} description - 簡短描述
+ * @param {array} tags - 技術標籤 (選配，預期為字串陣列)
+ */
 const PortfolioCard = ({ title, category, thumbnail, description, tags }) => (
   <div className="group cursor-pointer">
+    {/* 圖片容器 - 增加 Aspect Ratio 與外框細節 */}
     <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6 bg-slate-200 shadow-inner border border-slate-100">
       {thumbnail ? (
         <img 
@@ -34,29 +41,43 @@ const PortfolioCard = ({ title, category, thumbnail, description, tags }) => (
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
         />
       ) : (
-        <div className="flex items-center justify-center h-full text-slate-400 font-black italic uppercase tracking-tighter">No Image</div>
+        <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase tracking-tighter bg-slate-100">
+          No Image
+        </div>
       )}
-      {/* 懸浮遮罩預留 Lightbox 接口 */}
+      
+      {/* 懸浮遮罩 (Overlay) - 預留給 Lightbox 觸發或詳情跳轉 */}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
          <span className="text-white font-black text-xl mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-           View Details
+           View Project
          </span>
-         <div className="flex gap-2 mb-4 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
-            {tags?.slice(0, 3).map((tag, i) => (
-              <span key={i} className="text-[10px] text-slate-300 border border-white/20 px-2 py-0.5 rounded-full uppercase tracking-widest bg-white/10 backdrop-blur-md">
-                {tag}
-              </span>
-            ))}
-         </div>
+         
+         {/* 如果有 Tags 則顯示在前三項 */}
+         {tags && tags.length > 0 && (
+           <div className="flex flex-wrap gap-2 mb-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-75">
+              {tags.slice(0, 3).map((tag, i) => (
+                <span key={i} className="text-[10px] text-white/90 border border-white/20 px-2 py-0.5 rounded-full uppercase tracking-widest bg-white/10 backdrop-blur-md">
+                  {tag}
+                </span>
+              ))}
+           </div>
+         )}
       </div>
     </div>
+
+    {/* 文字內容區塊 */}
     <div className="px-2">
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">
-        {category || 'Project'}
-      </span>
+      {/* Category 選配邏輯：只有存在時才渲染標籤 */}
+      {category && (
+        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">
+          {category}
+        </span>
+      )}
+      
       <h3 className="text-3xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300">
         {title}
       </h3>
+      
       <p className="text-slate-500 mt-2 line-clamp-2 font-medium leading-relaxed">
         {description}
       </p>
