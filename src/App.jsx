@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Navbar from './components/Navbar';
 import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
-// --- Utility: 處理靜態資源路徑 ---
+// --- Utility: 處理靜態資源路徑 (修復 GitHub Pages 子路徑問題) ---
 const getAssetPath = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -13,10 +13,12 @@ const getAssetPath = (path) => {
   return `${base}${cleanPath}`;
 };
 
+// --- Utility: 強化版內容讀取器 ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
     const mod = modules[path];
     const rawContent = typeof mod === 'string' ? mod : (mod?.default || mod);
+    
     if (!rawContent || typeof rawContent !== 'string') return null;
 
     const parts = rawContent.split('---');
@@ -25,40 +27,55 @@ const loadContent = (modules) => {
         const frontmatter = yaml.load(parts[1]);
         const body = parts.slice(2).join('---').trim();
         const slug = path.split('/').pop().replace('.md', '');
+
         const normalizeImages = (imgData) => {
           if (!imgData) return [];
-          return Array.isArray(imgData) ? imgData.map(item => (typeof item === 'object' ? item.image : item)) : [imgData];
+          return Array.isArray(imgData) 
+            ? imgData.map(item => (typeof item === 'object' ? item.image : item))
+            : [imgData];
         };
-        return { ...frontmatter, main_images: normalizeImages(frontmatter.main_images), extra_images: normalizeImages(frontmatter.extra_images), body, slug };
+
+        return { 
+          ...frontmatter, 
+          main_images: normalizeImages(frontmatter.main_images),
+          extra_images: normalizeImages(frontmatter.extra_images),
+          body, 
+          slug 
+        };
       } catch (e) { return null; }
     }
     return null;
   }).filter(Boolean);
 };
 
-// --- 子組件: 內容卡片 (加入隨機輪播與 Read more) ---
+// --- 子組件: 內容卡片 (包含隨機輪播與 Read More) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const images = Array.isArray(main_images) ? main_images : [];
 
   useEffect(() => {
     if (images.length <= 1) return;
-    // 1. 隨機輪播時間 (3s - 6s)
-    const randomTime = Math.floor(Math.random() * 3000) + 3000;
+    // 產生 3000ms ~ 6000ms 之間的隨機時間，讓切換錯開
+    const randomInterval = Math.floor(Math.random() * 3000) + 3000;
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, randomTime);
+    }, randomInterval);
     return () => clearInterval(interval);
   }, [images]);
 
   return (
     <div 
-      className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out snap-center" 
+      className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out" 
       onClick={onClick}
     >
       <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 bg-slate-50 border border-slate-50 shadow-inner group-hover:-translate-y-1 transition-transform duration-500">
         {images.length > 0 ? (
-          <img key={images[currentImageIndex]} src={getAssetPath(images[currentImageIndex])} alt={title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+          <img 
+            key={images[currentImageIndex]} 
+            src={getAssetPath(images[currentImageIndex])} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+          />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-300 font-black italic bg-slate-50 uppercase">NO IMAGE</div>
         )}
@@ -70,14 +87,13 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
             {category}
           </span>
         )}
-        <h3 className="text-xl font-black tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
+        <h3 className="text-xl md:text-2xl font-black tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
           {title}
         </h3>
         <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80 mb-6">
           {description}
         </p>
         
-        {/* Read more 按鈕 */}
         <div className="mt-auto pt-4 flex items-center text-[10px] font-black tracking-[0.2em] text-blue-600 uppercase">
           Read More
           <svg className="w-3 h-3 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,18 +105,27 @@ const ContentCard = ({ title, category, main_images, description, onClick }) => 
   );
 };
 
+// --- 主組件: App ---
 export default function App() {
   const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '載入中...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
   const [about, setAbout] = useState([]);
+  
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = (item) => {
     setSelectedItem(item);
     setIsModalOpen(true);
+  };
+
+  const scrollContainer = (ref, direction) => {
+    if (ref.current) {
+      const scrollAmount = direction === 'left' ? -400 : 400;
+      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -147,33 +172,60 @@ export default function App() {
           { id: 'portfolio', title: 'Portfolio', data: portfolio },
           { id: 'achievements', title: 'Achievements', data: achievements },
           { id: 'activities', title: 'Activities', data: activities }
-        ].map(section => (
-          <section key={section.id} id={section.id} className="py-16">
-            <div className="flex items-baseline justify-between mb-8 px-6">
-              <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
-              <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
-            </div>
+        ].map(section => {
+          const sectionRef = useRef(null);
+          return (
+            <section key={section.id} id={section.id} className="py-16 relative group">
+              <div className="flex items-baseline justify-between mb-8 px-6">
+                <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
+                <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
+              </div>
 
-            {/* 3. 調整輪播佈局：兩側留白露出鄰近項目 */}
-            <div className="flex gap-6 overflow-x-auto pb-10 px-6 snap-x snap-mandatory no-scrollbar scroll-smooth">
-              {section.data.map((item) => (
-                <div key={item.slug} className="min-w-[85%] md:min-w-[45%] lg:min-w-[30%] snap-center">
-                  <ContentCard {...item} onClick={() => handleOpenModal(item)} />
-                </div>
-              ))}
-              {section.data.length === 0 && (
-                <div className="w-full py-10 text-center text-slate-400 italic">暫無內容</div>
+              {/* 左右導覽按鈕 */}
+              {section.data.length > 0 && (
+                <>
+                  <button 
+                    onClick={() => scrollContainer(sectionRef, 'left')}
+                    className="absolute left-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white hidden md:block"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button 
+                    onClick={() => scrollContainer(sectionRef, 'right')}
+                    className="absolute right-4 top-[60%] -translate-y-1/2 z-20 p-4 bg-white/80 backdrop-blur-md rounded-full shadow-lg border border-slate-100 text-slate-900 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-black hover:text-white hidden md:block"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </>
               )}
-            </div>
-          </section>
-        ))}
+
+              <div 
+                ref={sectionRef}
+                className="flex gap-6 overflow-x-auto pb-10 px-6 snap-x snap-mandatory no-scrollbar scroll-smooth"
+              >
+                {section.data.map((item) => (
+                  <div key={item.slug} className="min-w-[85%] md:min-w-[45%] lg:min-w-[30%] snap-center">
+                    <ContentCard {...item} onClick={() => handleOpenModal(item)} />
+                  </div>
+                ))}
+                {section.data.length === 0 && (
+                  <div className="w-full py-10 text-center text-slate-400 italic px-6">暫無內容</div>
+                )}
+              </div>
+            </section>
+          );
+        })}
 
         <footer className="py-24 text-center border-t border-slate-100/50 mt-20">
           <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU CHIN AN — ALL RIGHTS RESERVED</p>
         </footer>
       </main>
 
-      <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={selectedItem} />
+      <DetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        content={selectedItem} 
+      />
     </div>
   );
 }
