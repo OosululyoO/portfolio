@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import ParticleBackground from './components/ParticleBackground';
+import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
 
 // --- Utility: 通用內容讀取器 ---
@@ -24,34 +25,70 @@ const loadContent = (modules) => {
 };
 
 // --- 通用組件: ContentCard ---
-const ContentCard = ({ title, category, thumbnail, description }) => (
-  <div className="group cursor-pointer">
-    <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6 bg-slate-200 shadow-inner border border-slate-100">
-      {thumbnail ? (
-        <img src={thumbnail} alt={title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
-      ) : (
-        <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase tracking-tighter bg-slate-50">No Image</div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-         <span className="text-white font-black text-xl mb-1 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">Read More</span>
+const ContentCard = ({ title, category, main_images, description, onClick }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = main_images || [];
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    }, 3000); // 每 3 秒換一張圖
+    return () => clearInterval(interval);
+  }, [images]);
+
+  return (
+    <div className="group cursor-pointer" onClick={onClick}>
+      <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6 bg-slate-200 shadow-inner border border-slate-100">
+        {images.length > 0 ? (
+          <img 
+            src={images[currentImageIndex]} 
+            alt={title} 
+            className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase bg-slate-50">No Image</div>
+        )}
+        
+        {/* 輪播指示點 */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {images.map((_, i) => (
+              <div key={i} className={`h-1 rounded-full transition-all ${i === currentImageIndex ? 'w-4 bg-white' : 'w-1 bg-white/50'}`} />
+            ))}
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+           <span className="text-white font-black text-xl translate-y-4 group-hover:translate-y-0 transition-transform duration-500">View Project</span>
+        </div>
+      </div>
+      <div className="px-2">
+        {category && (
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">{category}</span>
+        )}
+        <h3 className="text-3xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300">{title}</h3>
+        <p className="text-slate-500 mt-2 line-clamp-2 font-medium">{description}</p>
       </div>
     </div>
-    <div className="px-2">
-      {category && (
-        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">{category}</span>
-      )}
-      <h3 className="text-3xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300">{title}</h3>
-      <p className="text-slate-500 mt-2 line-clamp-2 font-medium leading-relaxed">{description}</p>
-    </div>
-  </div>
-);
-
-function App() {
+  );
+};
+export default function App() {
+  // 狀態管理
   const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '正在載入個人簡介...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
   const [about, setAbout] = useState([]);
+  
+  // Modal 狀態
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = (item) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
 
   useEffect(() => {
     // 讀取首頁 Hero 設定
@@ -82,7 +119,7 @@ function App() {
       
       <main className="relative pt-32 px-6 max-w-7xl mx-auto">
         
-        {/* --- Hero Section (動態化) --- */}
+        {/* --- Hero Section --- */}
         <section className="py-24">
           <div className="max-w-4xl">
             <h1 className="text-6xl md:text-[9rem] font-[900] tracking-tighter leading-[0.85] mb-12">
@@ -104,7 +141,9 @@ function App() {
             <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {about.map((item) => <ContentCard key={item.slug} {...item} />)}
+            {about.map((item) => (
+              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
+            ))}
           </div>
         </section>
 
@@ -115,28 +154,35 @@ function App() {
             <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {portfolio.map((item) => <ContentCard key={item.slug} {...item} />)}
+            {portfolio.map((item) => (
+              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
+            ))}
           </div>
         </section>
 
-        {/* --- Achievements & Activities 區塊 ... 保持一樣的結構 --- */}
+        {/* --- Achievements Section --- */}
         <section id="achievements" className="py-32 border-t border-slate-200">
           <div className="flex items-baseline justify-between mb-20">
             <h2 className="text-5xl font-black tracking-tighter uppercase">Achievements</h2>
             <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {achievements.map((item) => <ContentCard key={item.slug} {...item} />)}
+            {achievements.map((item) => (
+              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
+            ))}
           </div>
         </section>
 
+        {/* --- Activities Section --- */}
         <section id="activities" className="py-32 border-t border-slate-200">
           <div className="flex items-baseline justify-between mb-20">
             <h2 className="text-5xl font-black tracking-tighter uppercase">Activities</h2>
             <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {activities.map((item) => <ContentCard key={item.slug} {...item} />)}
+            {activities.map((item) => (
+              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
+            ))}
           </div>
         </section>
 
@@ -144,8 +190,13 @@ function App() {
           <p className="text-slate-400 text-xs font-black tracking-[0.3em] uppercase">© 2026 LIU JIN AN</p>
         </footer>
       </main>
+
+      {/* 彈窗組件 */}
+      <DetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        content={selectedItem} 
+      />
     </div>
   );
 }
-
-export default App;
