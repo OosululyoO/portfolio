@@ -2,13 +2,11 @@ backend:
   name: github
   repo: OosululyoO/portfolio
   branch: main
-  # 1. 告訴 CMS 去 Netlify 官方伺服器進行驗證
-  base_url: https://api.netlify.com
-  # 2. 告訴 Netlify 你的專案名稱是哪一個
-  site_domain: oosululyoo-portfolio.netlify.app
+  # base_url 和 site_domain 都不需要了，請直接刪除這兩行
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
+# ... 下面保留不變 ...
 
 # ... 下面的 collections 保持不變 ...
 collections:
