@@ -2,11 +2,13 @@ backend:
   name: github
   repo: OosululyoO/portfolio
   branch: main
-  site_domain: oosululyoo-portfolio.netlify.app
+  # 關鍵修正：換成 base_url 並加上完整網址
+  base_url: https://oosululyoo-portfolio.netlify.app
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
+# ... 下面的 collections 保持原樣 ...
 
 collections:
   # 1. Portfolio: AIoT 與軟體作品
