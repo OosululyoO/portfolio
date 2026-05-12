@@ -7,9 +7,10 @@ media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
 collections:
-  # 1. Global Settings (對應 Home 的文字與全域分類)
+  # 1. 全域設定 (對應 Home 的文字與全域分類)
   - name: "settings"
     label: "Global Settings (全域設定)"
+    delete: false # 防止誤刪設定檔
     files:
       - name: "hero"
         label: "Homepage Hero (首頁文字設定)"
@@ -46,6 +47,7 @@ collections:
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
     create: true
+    slug: "{{slug}}"
     fields:
       - { label: "Award Name", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
@@ -58,6 +60,7 @@ collections:
     label: "Activities (活動紀錄)"
     folder: "src/content/activities"
     create: true
+    slug: "{{slug}}"
     fields:
       - { label: "Event Name", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
@@ -70,6 +73,7 @@ collections:
     label: "About (關於我資料)"
     folder: "src/content/about"
     create: true
+    slug: "{{slug}}"
     fields:
       - { label: "Section Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
