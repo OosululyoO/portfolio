@@ -1,0 +1,43 @@
+backend:
+  name: github
+  repo: OosululyoO/portfolio # 例如: jinan-liu/portfolio-web
+  branch: main
+
+media_folder: "public/images/uploads" # 圖片上傳後的存放路徑
+public_folder: "/images/uploads"      # 程式碼中引用圖片的網址路徑
+
+collections:
+  # 1. Portfolio: AIoT 與軟體作品
+  - name: "portfolio"
+    label: "Portfolio (作品)"
+    folder: "src/content/portfolio"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Category", name: "category", widget: "select", options: ["AIoT", "Software"] }
+      - { label: "Featured Image", name: "thumbnail", widget: "image" }
+      - { label: "Description", name: "body", widget: "markdown" }
+
+  # 2. Achievements: 競賽列表與獎狀
+  - name: "achievements"
+    label: "Achievements (競賽獎項)"
+    folder: "src/content/achievements"
+    create: true
+    fields:
+      - { label: "Award Name", name: "title", widget: "string" }
+      - { label: "Competition", name: "competition", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Certificate Image", name: "image", widget: "image" }
+      - { label: "Summary", name: "body", widget: "text" }
+
+  # 3. Activities: 活動紀錄瀑布流
+  - name: "activities"
+    label: "Activities (活動紀錄)"
+    folder: "src/content/activities"
+    create: true
+    fields:
+      - { label: "Event Name", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime" }
+      - { label: "Event Photos", name: "photos", widget: "list", field: { label: "Photo", name: "photo", widget: "image" } }
+      - { label: "Content", name: "body", widget: "markdown" }
