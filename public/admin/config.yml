@@ -4,26 +4,40 @@ backend:
   branch: main
 
 local_backend: true
-
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
+# 定義重複使用的欄位結構 (Common Fields)
+common_fields: &common_fields
+  - { label: "Title", name: "title", widget: "string" }
+  - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
+  - label: "Main Images (主頁輪播照片)"
+    name: "main_images"
+    widget: "list"
+    summary: "{{fields.image}}"
+    field: { label: "Image", name: "image", widget: "image" }
+  - label: "Extra Images (詳細頁末尾照片)"
+    name: "extra_images"
+    widget: "list"
+    required: false
+    field: { label: "Image", name: "image", widget: "image" }
+  - { label: "Short Description", name: "description", widget: "string" }
+  - { label: "Full Content", name: "body", widget: "markdown" }
+
 collections:
-  # 1. 全域設定 (對應 Home 的文字與全域分類)
   - name: "settings"
-    label: "Global Settings (全域設定)"
-    delete: false # 防止誤刪設定檔
+    label: "Global Settings"
+    delete: false
     files:
       - name: "hero"
-        label: "Homepage Hero (首頁文字設定)"
+        label: "Homepage Hero"
         file: "src/content/settings/hero.yml"
         fields:
           - { label: "Main Title", name: "titleLine1", widget: "string" }
           - { label: "Accent Title", name: "titleAccent", widget: "string" }
           - { label: "Hero Description", name: "heroDescription", widget: "text" }
-      
       - name: "categories"
-        label: "Categories Management (分類管理)"
+        label: "Categories Management"
         file: "src/content/settings/categories.yml"
         fields:
           - label: "All Categories"
@@ -31,94 +45,28 @@ collections:
             widget: "list"
             field: { label: "Category Name", name: "name", widget: "string" }
 
-  # 2. Portfolio (作品)
   - name: "portfolio"
     label: "Portfolio (作品)"
     folder: "src/content/portfolio"
     create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      
-      # 1. 主要照片 (用於主頁輪播)
-      - label: "Main Images (主頁輪播照片)"
-        name: "main_images"
-        widget: "list"
-        summary: "{{fields.image}}"
-        field: { label: "Image", name: "image", widget: "image" }
+    fields: *common_fields
 
-      # 2. 額外照片 (顯示在詳細內容末尾)
-      - label: "Extra Images (詳細頁末尾照片)"
-        name: "extra_images"
-        widget: "list"
-        required: false
-        field: { label: "Image", name: "image", widget: "image" }
-      
-      - { label: "Short Description", name: "description", widget: "string" }
-      - { label: "Full Content", name: "body", widget: "markdown" }
-
-
-  # 3. Achievements (競賽獎項)
   - name: "achievements"
     label: "Achievements (競賽獎項)"
     folder: "src/content/achievements"
     create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      
-      # 1. 主要照片 (用於主頁輪播)
-      - label: "Main Images (主頁輪播照片)"
-        name: "main_images"
-        widget: "list"
-        summary: "{{fields.image}}"
-        field: { label: "Image", name: "image", widget: "image" }
+    fields: *common_fields
 
-      # 2. 額外照片 (顯示在詳細內容末尾)
-      - label: "Extra Images (詳細頁末尾照片)"
-        name: "extra_images"
-        widget: "list"
-        required: false
-        field: { label: "Image", name: "image", widget: "image" }
-      
-      - { label: "Short Description", name: "description", widget: "string" }
-      - { label: "Full Content", name: "body", widget: "markdown" }
-
-  # 4. Activities (活動紀錄)
   - name: "activities"
     label: "Activities (活動紀錄)"
     folder: "src/content/activities"
     create: true
-    slug: "{{slug}}"
-    fields:
-      - { label: "Title", name: "title", widget: "string" }
-      - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }
-      
-      # 1. 主要照片 (用於主頁輪播)
-      - label: "Main Images (主頁輪播照片)"
-        name: "main_images"
-        widget: "list"
-        summary: "{{fields.image}}"
-        field: { label: "Image", name: "image", widget: "image" }
+    fields: *common_fields
 
-      # 2. 額外照片 (顯示在詳細內容末尾)
-      - label: "Extra Images (詳細頁末尾照片)"
-        name: "extra_images"
-        widget: "list"
-        required: false
-        field: { label: "Image", name: "image", widget: "image" }
-      
-      - { label: "Short Description", name: "description", widget: "string" }
-      - { label: "Full Content", name: "body", widget: "markdown" }
-
-  # 5. About (關於我)
   - name: "about"
     label: "About (關於我資料)"
     folder: "src/content/about"
     create: true
-    slug: "{{slug}}"
     fields:
       - { label: "Section Title", name: "title", widget: "string" }
       - { label: "Category", name: "category", widget: "relation", collection: "settings", file: "categories", search_fields: ["all_categories.*.name"], display_fields: ["all_categories.*.name"], value_field: "all_categories.*.name", required: false }

@@ -1,4 +1,3 @@
-// src/components/DetailModal.jsx
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 
@@ -9,35 +8,70 @@ const DetailModal = ({ isOpen, onClose, content }) => {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" />
+          {/* 背景遮罩 */}
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+            onClick={onClose} 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" 
+          />
           
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl z-10">
-            <button onClick={onClose} className="fixed md:absolute top-6 right-8 text-slate-400 hover:text-slate-900 font-black text-2xl z-50 p-2">✕</button>
+          {/* 視窗主體 */}
+          <motion.div 
+            initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} 
+            className="relative bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[2.5rem] shadow-2xl z-10"
+          >
+            {/* 關閉按鈕 */}
+            <button 
+              onClick={onClose} 
+              className="absolute top-6 right-8 text-slate-400 hover:text-blue-600 transition-colors font-black text-2xl z-50 p-2"
+            >
+              ✕
+            </button>
 
             <div className="p-8 md:p-16">
-              {/* 詳細頁上方顯示第一張主圖 */}
+              {/* 第一張主圖作為 Header */}
               {content.main_images?.[0] && (
-                <img src={content.main_images[0]} alt={content.title} className="w-full aspect-video object-cover rounded-3xl mb-10 shadow-lg" />
+                <img 
+                  src={content.main_images[0]} 
+                  alt={content.title} 
+                  className="w-full aspect-video object-cover rounded-3xl mb-12 shadow-lg" 
+                />
               )}
 
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-8">{content.title}</h2>
+              <div className="max-w-3xl mx-auto">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 mb-4 block">
+                  {content.category}
+                </span>
+                <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-10 leading-[0.9]">
+                  {content.title}
+                </h2>
 
-              {/* Markdown 內容 */}
-              <div className="prose prose-slate max-w-none mb-12">
-                <ReactMarkdown>{content.body}</ReactMarkdown>
-              </div>
-
-              {/* 額外照片顯示在 Markdown 之後 */}
-              {content.extra_images && content.extra_images.length > 0 && (
-                <div className="space-y-8 pt-10 border-t border-slate-100">
-                  <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Project Gallery</h4>
-                  <div className="grid grid-cols-1 gap-6">
-                    {content.extra_images.map((img, idx) => (
-                      <img key={idx} src={img} alt="Extra" className="w-full rounded-2xl shadow-sm border border-slate-100" />
-                    ))}
-                  </div>
+                {/* Markdown 渲染內容 */}
+                <div className="prose prose-slate prose-lg max-w-none 
+                  prose-headings:font-black prose-headings:tracking-tighter 
+                  prose-p:text-slate-600 prose-p:leading-relaxed
+                  prose-strong:text-slate-900 prose-a:text-blue-600
+                  mb-20">
+                  <ReactMarkdown>{content.body}</ReactMarkdown>
                 </div>
-              )}
+
+                {/* 延伸圖庫 */}
+                {content.extra_images && content.extra_images.length > 0 && (
+                  <div className="space-y-8 pt-16 border-t border-slate-100">
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-400">Project Gallery</h4>
+                    <div className="grid grid-cols-1 gap-8">
+                      {content.extra_images.map((img, idx) => (
+                        <img 
+                          key={idx} 
+                          src={img} 
+                          alt={`Gallery ${idx}`} 
+                          className="w-full rounded-2xl shadow-sm border border-slate-100" 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         </div>

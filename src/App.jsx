@@ -14,7 +14,21 @@ const loadContent = (modules) => {
         const frontmatter = yaml.load(parts[1]);
         const body = parts.slice(2).join('---').trim();
         const slug = path.split('/').pop().replace('.md', '');
-        return { ...frontmatter, body, slug };
+
+        const normalizeImages = (imgData) => {
+          if (!imgData) return [];
+          return Array.isArray(imgData) 
+            ? imgData.map(item => (typeof item === 'object' ? item.image : item))
+            : [imgData];
+        };
+
+        return { 
+          ...frontmatter, 
+          main_images: normalizeImages(frontmatter.main_images),
+          extra_images: normalizeImages(frontmatter.extra_images),
+          body, 
+          slug 
+        };
       } catch (e) {
         console.error("YAML 解析失敗:", path, e);
         return null;
@@ -24,64 +38,75 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 通用組件: ContentCard ---
+// --- 通用組件: ContentCard (加上個別小外框) ---
 const ContentCard = ({ title, category, main_images, description, onClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const images = main_images || [];
+  const images = Array.isArray(main_images) ? main_images : [];
 
   useEffect(() => {
     if (images.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, 3000); // 每 3 秒換一張圖
+    }, 3000);
     return () => clearInterval(interval);
   }, [images]);
 
   return (
-    <div className="group cursor-pointer" onClick={onClick}>
-      <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] mb-6 bg-slate-200 shadow-inner border border-slate-100">
+    <div 
+      className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all duration-500 ease-out" 
+      onClick={onClick}
+    >
+      {/* 內部圖片區 */}
+      <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 bg-slate-50 border border-slate-50 shadow-inner group-hover:-translate-y-1 transition-transform duration-500">
         {images.length > 0 ? (
           <img 
+            key={images[currentImageIndex]} 
             src={images[currentImageIndex]} 
             alt={title} 
-            className="w-full h-full object-cover transition-opacity duration-1000 ease-in-out"
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-slate-400 font-[900] italic uppercase bg-slate-50">No Image</div>
+          <div className="flex items-center justify-center h-full text-slate-300 font-black italic bg-slate-50">NO IMAGE</div>
         )}
         
-        {/* 輪播指示點 */}
         {images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
-              <div key={i} className={`h-1 rounded-full transition-all ${i === currentImageIndex ? 'w-4 bg-white' : 'w-1 bg-white/50'}`} />
+              <div key={i} className={`h-1 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'w-5 bg-white' : 'w-1 bg-white/40'}`} />
             ))}
           </div>
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-           <span className="text-white font-black text-xl translate-y-4 group-hover:translate-y-0 transition-transform duration-500">View Project</span>
-        </div>
+        {/* 懸停漸層遮罩 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-600/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
       </div>
-      <div className="px-2">
+
+      {/* 文字內容區 */}
+      <div className="px-3 pb-4 flex-grow">
         {category && (
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md inline-block mb-3">{category}</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 bg-blue-50/50 px-3 py-1 rounded-full inline-block mb-3 border border-blue-100/30">
+            {category}
+          </span>
         )}
-        <h3 className="text-3xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300">{title}</h3>
-        <p className="text-slate-500 mt-2 line-clamp-2 font-medium">{description}</p>
+        <h3 className="text-xl md:text-2xl font-[900] tracking-tighter text-slate-900 group-hover:text-blue-600 transition-colors duration-300 mb-2 leading-tight">
+          {title}
+        </h3>
+        <p className="text-slate-500 text-sm font-medium line-clamp-2 leading-relaxed opacity-80 group-hover:opacity-100">
+          {description}
+        </p>
       </div>
     </div>
   );
 };
+
+// --- 主程式: App ---
 export default function App() {
-  // 狀態管理
-  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: '正在載入個人簡介...' });
+  const [hero, setHero] = useState({ titleLine1: 'Building', titleAccent: 'Solutions.', heroDescription: 'Loading profile...' });
   const [portfolio, setPortfolio] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activities, setActivities] = useState([]);
   const [about, setAbout] = useState([]);
   
-  // Modal 狀態
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -91,16 +116,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    // 讀取首頁 Hero 設定
     const heroModule = import.meta.glob('./content/settings/hero.yml', { query: '?raw', eager: true });
     const heroPath = Object.keys(heroModule)[0];
     if (heroPath) {
-      try {
-        setHero(yaml.load(heroModule[heroPath].default));
-      } catch (e) { console.error("Hero 設定讀取失敗", e); }
+      try { setHero(yaml.load(heroModule[heroPath].default)); } catch (e) { console.error(e); }
     }
 
-    // 讀取各集合內容
     const portfolioModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
     const achievementModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
     const activityModules = import.meta.glob('./content/activities/*.md', { query: '?raw', eager: true });
@@ -118,80 +139,53 @@ export default function App() {
       <Navbar />
       
       <main className="relative pt-32 px-6 max-w-7xl mx-auto">
-        
-        {/* --- Hero Section --- */}
         <section className="py-24">
           <div className="max-w-4xl">
-            <h1 className="text-6xl md:text-[9rem] font-[900] tracking-tighter leading-[0.85] mb-12">
+            <h1 className="text-6xl md:text-[8rem] font-[900] tracking-tighter leading-[0.85] mb-12">
               {hero.titleLine1} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 to-indigo-600">
                 {hero.titleAccent}
               </span>
             </h1>
-            <p className="text-xl md:text-3xl text-slate-500 font-medium max-w-2xl leading-[1.2]">
+            <p className="text-xl md:text-3xl text-slate-500 font-medium max-w-2xl leading-tight opacity-90">
               {hero.heroDescription}
             </p>
           </div>
         </section>
 
-        {/* --- About Section --- */}
-        <section id="about" className="py-32 border-t border-slate-200">
-          <div className="flex items-baseline justify-between mb-20">
-            <h2 className="text-5xl font-black tracking-tighter uppercase">About</h2>
-            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {about.map((item) => (
-              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
-            ))}
-          </div>
-        </section>
+        {[
+          { id: 'about', title: 'About', data: about },
+          { id: 'portfolio', title: 'Portfolio', data: portfolio },
+          { id: 'achievements', title: 'Achievements', data: achievements },
+          { id: 'activities', title: 'Activities', data: activities }
+        ].map(section => (
+          <section key={section.id} id={section.id} className="py-16">
+            <div className="flex items-baseline justify-between mb-8">
+              <h2 className="text-3xl font-black tracking-tighter uppercase text-slate-800 ml-4">{section.title}</h2>
+              <div className="hidden md:block h-[1px] flex-grow mx-8 bg-slate-200/40"></div>
+            </div>
 
-        {/* --- Portfolio Section --- */}
-        <section id="portfolio" className="py-32 border-t border-slate-200">
-          <div className="flex items-baseline justify-between mb-20">
-            <h2 className="text-5xl font-black tracking-tighter uppercase">Portfolio</h2>
-            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {portfolio.map((item) => (
-              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
-            ))}
-          </div>
-        </section>
+            {/* 大區塊容器 */}
+            <div className="bg-slate-50/50 backdrop-blur-sm border border-slate-100/50 rounded-[4rem] p-6 md:p-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {section.data.map((item) => (
+                  <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
+                ))}
+                {section.data.length === 0 && (
+                  <div className="col-span-full py-20 text-center text-slate-400 font-medium italic opacity-60">
+                    探索更多內容中...
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        ))}
 
-        {/* --- Achievements Section --- */}
-        <section id="achievements" className="py-32 border-t border-slate-200">
-          <div className="flex items-baseline justify-between mb-20">
-            <h2 className="text-5xl font-black tracking-tighter uppercase">Achievements</h2>
-            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {achievements.map((item) => (
-              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
-            ))}
-          </div>
-        </section>
-
-        {/* --- Activities Section --- */}
-        <section id="activities" className="py-32 border-t border-slate-200">
-          <div className="flex items-baseline justify-between mb-20">
-            <h2 className="text-5xl font-black tracking-tighter uppercase">Activities</h2>
-            <div className="hidden md:block h-[1px] flex-grow mx-12 bg-slate-100"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
-            {activities.map((item) => (
-              <ContentCard key={item.slug} {...item} onClick={() => handleOpenModal(item)} />
-            ))}
-          </div>
-        </section>
-
-        <footer className="py-24 text-center border-t border-slate-100">
-          <p className="text-slate-400 text-xs font-black tracking-[0.3em] uppercase">© 2026 LIU JIN AN</p>
+        <footer className="py-24 text-center border-t border-slate-100/50 mt-20">
+          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU JIN AN</p>
         </footer>
       </main>
 
-      {/* 彈窗組件 */}
       <DetailModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
