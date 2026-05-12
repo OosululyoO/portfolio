@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+  /* 覆蓋預設的 sans 字體，符合現代極簡規範 */
+  --font-sans: "Inter", sans-serif;
+}
