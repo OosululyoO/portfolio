@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams, Link, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Swiper 核心組件
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -16,7 +16,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-// --- Utility: 處理路徑 ---
 export const getAssetPath = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -24,7 +23,6 @@ export const getAssetPath = (path) => {
   return `/portfolio/${cleanPath}`;
 };
 
-// --- Utility: 內容讀取器 ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
     const mod = modules[path];
@@ -53,7 +51,6 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 組件: 卡片 (內含小輪播) ---
 const ContentCard = ({ title, description, main_images, categories, date, onClick }) => {
   const hasMultipleImages = main_images && main_images.length > 1;
 
@@ -94,9 +91,30 @@ const ContentCard = ({ title, description, main_images, categories, date, onClic
   );
 };
 
-// --- 頁面: 首頁 (恢復卡片間輪播) ---
+// --- 新增：回到主頁按鈕組件 ---
+const BackToHomeButton = () => {
+  const location = useLocation();
+  if (location.pathname === '/') return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="fixed bottom-8 right-8 z-[90]"
+    >
+      <Link 
+        to="/" 
+        className="w-14 h-14 bg-white/90 backdrop-blur shadow-xl rounded-full flex items-center justify-center text-slate-900 hover:bg-black hover:text-white transition-all border border-slate-100"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      </Link>
+    </motion.div>
+  );
+};
+
 const Home = ({ data, onOpenModal }) => {
-  // 2. 修正：主頁區塊配置，包含 About, Project, Achievements, Activities
   const sections = [
     { id: 'about', title: 'About', data: data.about },
     { id: 'portfolio', title: 'Project', data: data.portfolio },
@@ -108,11 +126,17 @@ const Home = ({ data, onOpenModal }) => {
     <main className="relative pt-32 pb-20">
       <section className="px-6 mb-24 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-slate-900 mb-8 uppercase leading-none">
-            LIU CHIN AN
+          {/* 修正：Main Title */}
+          <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-slate-900 mb-2 uppercase leading-none">
+            劉晉安
           </h1>
+          {/* 修正：Accent Title 帶漸層 */}
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-8 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent uppercase">
+            CHIN AN LIU
+          </h2>
+          {/* 修正：Hero Description */}
           <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed italic">
-            AIoT Developer & Student at National Formosa University.
+            很高興認識你：）
           </p>
         </motion.div>
       </section>
@@ -120,8 +144,6 @@ const Home = ({ data, onOpenModal }) => {
       {sections.map((section) => (
         <section key={section.id} id={section.id} className="mb-24 px-4 md:px-10">
           <h2 className="text-4xl font-black tracking-tight uppercase mb-10 px-4">{section.title}</h2>
-          
-          {/* 3. 恢復：不同 Card 間的輪播效果 */}
           <Swiper
             modules={[Navigation, Autoplay, Pagination]}
             spaceBetween={30}
@@ -151,16 +173,19 @@ const Home = ({ data, onOpenModal }) => {
   );
 };
 
-// --- 頁面: 分類過濾頁 ---
 const CategoryPage = ({ data, onOpenModal }) => {
   const { slug } = useParams();
-  const allItems = [...data.about, ...data.portfolio, ...data.achievements, ...data.activities];
   
-  // 篩選邏輯：檢查 categories 陣列或資料夾 slug
-  const filteredItems = allItems.filter(item => 
-    item.categories?.some(c => c.toLowerCase() === slug.toLowerCase()) || 
-    slug.toLowerCase() === 'about' && data.about.includes(item) // 特殊處理 About
-  );
+  // 修正：更精確的分類池映射，解決顯示不出來的問題
+  const poolMap = {
+    'about': data.about,
+    'portfolio': data.portfolio,
+    'project': data.portfolio,
+    'achievements': data.achievements,
+    'activities': data.activities
+  };
+
+  const filteredItems = poolMap[slug.toLowerCase()] || [];
 
   return (
     <main className="pt-40 pb-20 px-10 min-h-[70vh]">
@@ -172,6 +197,9 @@ const CategoryPage = ({ data, onOpenModal }) => {
           <ContentCard key={item.slug} {...item} onClick={() => onOpenModal(item)} />
         ))}
       </div>
+      {filteredItems.length === 0 && (
+        <p className="text-slate-500 mt-10 italic text-xl">目前此分類尚無內容</p>
+      )}
     </main>
   );
 };
@@ -182,7 +210,6 @@ export default function App() {
 
   useEffect(() => {
     const loadAll = async () => {
-      // 讀取 content 下的所有資料夾
       const abModules = import.meta.glob('./content/about/*.md', { query: '?raw', eager: true });
       const pModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
       const achModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
@@ -212,6 +239,7 @@ export default function App() {
           onClose={() => setModal({ isOpen: false, content: null })} 
           content={modal.content} 
         />
+        <BackToHomeButton />
       </div>
     </BrowserRouter>
   );
