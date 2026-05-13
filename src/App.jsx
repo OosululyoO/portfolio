@@ -1,19 +1,27 @@
-import { useEffect, useState, useRef } from 'react';
-import { BrowserRouter as Router, Routes, Route, useParams, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import ParticleBackground from './components/ParticleBackground';
 import DetailModal from './components/DetailModal';
 import yaml from 'js-yaml';
+import { motion } from 'framer-motion';
 
-// --- Utility: 處理靜態資源路徑 ---
-const getAssetPath = (path) => {
+// Swiper 核心組件
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Autoplay, Pagination } from 'swiper/modules';
+
+// Swiper 樣式
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+export const getAssetPath = (path) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   return `/portfolio/${cleanPath}`;
 };
 
-// --- Utility: 內容讀取器 (支援多分類與日期) ---
 const loadContent = (modules) => {
   return Object.keys(modules).map((path) => {
     const mod = modules[path];
@@ -27,20 +35,14 @@ const loadContent = (modules) => {
         const body = parts.slice(2).join('---').trim();
         const slug = path.split('/').pop().replace('.md', '');
 
-        const normalizeImages = (imgData) => {
-          if (!imgData) return [];
-          return Array.isArray(imgData) ? imgData.map(item => (typeof item === 'object' ? item.image : item)) : [imgData];
-        };
-
-        return { 
-          ...frontmatter, 
-          // 支援多個 Category
-          categories: Array.isArray(frontmatter.category) ? frontmatter.category : [frontmatter.category].filter(Boolean),
-          main_images: normalizeImages(frontmatter.main_images),
-          extra_images: normalizeImages(frontmatter.extra_images),
-          date: frontmatter.date ? new Date(frontmatter.date).toLocaleDateString('zh-TW') : null,
-          body, 
-          slug 
+        return {
+          ...frontmatter,
+          body,
+          slug,
+          categories: Array.isArray(frontmatter.categories) 
+            ? frontmatter.categories 
+            : (frontmatter.category ? [frontmatter.category] : []),
+          date: frontmatter.date || ''
         };
       } catch (e) { return null; }
     }
@@ -48,142 +50,108 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 子組件: 內容卡片 ---
-const ContentCard = ({ title, categories, main_images, description, date, onClick }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const images = main_images || [];
-
-  useEffect(() => {
-    if (images.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, Math.floor(Math.random() * 3000) + 3000);
-    return () => clearInterval(interval);
-  }, [images]);
-
-  return (
-    <div className="group cursor-pointer flex flex-col h-full p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-500" onClick={onClick}>
-      <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] mb-6 bg-slate-50">
-        {images.length > 0 && (
-          <img src={getAssetPath(images[currentImageIndex])} alt={title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-        )}
-      </div>
-      <div className="px-3 flex-grow flex flex-col">
-        <div className="flex flex-wrap gap-2 mb-3">
+const ContentCard = ({ title, description, main_images, categories, date, onClick }) => (
+  <div onClick={onClick} className="group relative bg-white/70 backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer h-full">
+    <div className="aspect-[4/3] overflow-hidden">
+      <img src={getAssetPath(main_images?.[0])} alt={title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+    </div>
+    <div className="p-8">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex flex-wrap gap-2">
           {categories.map(cat => (
-            <span key={cat} className="text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-md">{cat}</span>
+            <span key={cat} className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{cat}</span>
           ))}
-          {date && <span className="text-[9px] font-bold text-slate-400 ml-auto">{date}</span>}
         </div>
-        <h3 className="text-xl font-black text-slate-900 group-hover:text-blue-600 mb-2">{title}</h3>
-        <p className="text-slate-500 text-sm line-clamp-2 mb-6">{description}</p>
-        <div className="mt-auto text-[10px] font-black text-blue-600 uppercase flex items-center">
-          Read More <span className="ml-2">→</span>
-        </div>
+        <span className="text-[10px] font-bold text-slate-400">{date}</span>
       </div>
+      <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors uppercase">{title}</h3>
+      <p className="text-slate-500 line-clamp-2 font-medium leading-relaxed">{description}</p>
     </div>
-  );
-};
+  </div>
+);
 
-// --- 頁面組件: 分類清單頁 ---
-const CategoryPage = ({ allData }) => {
-  const { categoryName } = useParams();
-  const filteredData = allData.filter(item => item.categories.includes(categoryName));
+const Home = ({ data, onOpenModal }) => {
+  const sections = [
+    { title: 'Project Portfolio', data: data.portfolio },
+    { title: 'Achievements', data: data.achievements },
+    { title: 'Activities', data: data.activities }
+  ];
 
   return (
-    <div className="pt-32 px-6 max-w-7xl mx-auto min-h-screen">
-      <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter">
-        Category: <span className="text-blue-600">{categoryName}</span>
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredData.map(item => (
-          <ContentCard key={item.slug} {...item} />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// --- 主頁面 ---
-const HomePage = ({ sections, handleOpenModal }) => {
-  return (
-    <main className="relative pt-32 px-0 max-w-7xl mx-auto overflow-hidden">
-      <section className="py-24 px-6 text-center md:text-left">
-        <h1 className="text-6xl md:text-[8rem] font-black tracking-tighter leading-none mb-8">
-          LIU CHIN AN<span className="text-blue-600">.</span>
-        </h1>
-        <p className="text-xl text-slate-500 max-w-2xl">Building innovative AIoT solutions and exploring sustainable futures.</p>
+    <main className="relative pt-32 pb-20">
+      <section className="px-6 mb-24 text-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-slate-900 mb-8 uppercase leading-none">LIU CHIN AN</h1>
+          <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed italic">AIoT Developer & Student at National Formosa University.</p>
+        </motion.div>
       </section>
 
-      {sections.map(section => {
-        const sectionRef = useRef(null);
-        // 環狀輪播邏輯：將資料複製一份接在後面
-        const displayData = [...section.data, ...section.data];
+      {sections.map((section) => (
+        <section key={section.title} className="mb-24 px-4 md:px-10">
+          <h2 className="text-4xl font-black tracking-tight uppercase mb-10 px-4">{section.title}</h2>
+          <Swiper
+            modules={[Navigation, Autoplay, Pagination]}
+            spaceBetween={30}
+            slidesPerView={1.2}
+            loop={section.data.length > 3}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            navigation
+            pagination={{ clickable: true }}
+            breakpoints={{ 768: { slidesPerView: 2.2 }, 1024: { slidesPerView: 3.2 } }}
+            className="pb-12"
+          >
+            {section.data.map((item) => (
+              <SwiperSlide key={item.slug}>
+                <ContentCard {...item} onClick={() => onOpenModal(item)} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </section>
+      ))}
+    </main>
+  );
+};
 
-        return (
-          <section key={section.id} id={section.id} className="py-16 relative">
-            <div className="flex items-baseline justify-between mb-8 px-6">
-              <h2 className="text-3xl font-black tracking-tighter uppercase">{section.title}</h2>
-            </div>
-            <div ref={sectionRef} className="flex gap-6 overflow-x-auto pb-10 px-6 no-scrollbar snap-x scroll-smooth">
-              {displayData.map((item, idx) => (
-                <div key={`${item.slug}-${idx}`} className="min-w-[85%] md:min-w-[30%] snap-center">
-                  <ContentCard {...item} onClick={() => handleOpenModal(item)} />
-                </div>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+const CategoryPage = ({ data, onOpenModal }) => {
+  const { slug } = useParams();
+  const allItems = [...data.portfolio, ...data.achievements, ...data.activities];
+  const filteredItems = allItems.filter(item => item.categories?.some(c => c.toLowerCase() === slug.toLowerCase()));
+
+  return (
+    <main className="pt-40 pb-20 px-10">
+      <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter">Category: <span className="text-blue-600">{slug}</span></h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {filteredItems.map(item => <ContentCard key={item.slug} {...item} onClick={() => onOpenModal(item)} />)}
+      </div>
     </main>
   );
 };
 
 export default function App() {
-  const [data, setData] = useState({ portfolio: [], achievements: [], activities: [], about: [] });
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [data, setData] = useState({ portfolio: [], achievements: [], activities: [] });
+  const [modal, setModal] = useState({ isOpen: false, content: null });
 
   useEffect(() => {
-    const p = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
-    const ac = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
-    const act = import.meta.glob('./content/activities/*.md', { query: '?raw', eager: true });
-    const ab = import.meta.glob('./content/about/*.md', { query: '?raw', eager: true });
-
-    setData({
-      portfolio: loadContent(p),
-      achievements: loadContent(ac),
-      activities: loadContent(act),
-      about: loadContent(ab)
-    });
+    const loadAll = async () => {
+      const pModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
+      const achModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
+      const actModules = import.meta.glob('./content/activities/*.md', { query: '?raw', eager: true });
+      setData({ portfolio: loadContent(pModules), achievements: loadContent(achModules), activities: loadContent(actModules) });
+    };
+    loadAll();
   }, []);
 
-  const allData = [...data.portfolio, ...data.achievements, ...data.activities, ...data.about];
-
   return (
-    <Router basename="/portfolio">
-      <div className="min-h-screen bg-[#fcfdfe]">
+    <BrowserRouter basename="/portfolio">
+      <div className="min-h-screen bg-[#fcfdfe] text-slate-900">
         <ParticleBackground />
         <Navbar />
         <Routes>
-          <Route path="/" element={
-            <HomePage 
-              handleOpenModal={(item) => { setSelectedItem(item); setIsModalOpen(true); }}
-              sections={[
-                { id: 'about', title: 'About', data: data.about },
-                { id: 'portfolio', title: 'Portfolio', data: data.portfolio },
-                { id: 'achievements', title: 'Achievements', data: data.achievements },
-                { id: 'activities', title: 'Activities', data: data.activities }
-              ]} 
-            />
-          } />
-          <Route path="/category/:categoryName" element={<CategoryPage allData={allData} />} />
+          <Route path="/" element={<Home data={data} onOpenModal={(item) => setModal({ isOpen: true, content: item })} />} />
+          <Route path="/category/:slug" element={<CategoryPage data={data} onOpenModal={(item) => setModal({ isOpen: true, content: item })} />} />
         </Routes>
-        <footer className="py-24 text-center border-t border-slate-100/50">
-          <p className="text-slate-400 text-[10px] font-black tracking-[0.4em] uppercase">© 2026 LIU CHIN AN — ALL RIGHTS RESERVED</p>
-        </footer>
-        <DetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} content={selectedItem} />
+        <DetailModal isOpen={modal.isOpen} onClose={() => setModal({ isOpen: false, content: null })} content={modal.content} />
       </div>
-    </Router>
+    </BrowserRouter>
   );
 }

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* 覆蓋預設的 sans 字體，符合現代極簡規範 */
