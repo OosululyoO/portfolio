@@ -51,7 +51,7 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-// --- 組件: 內容卡片 (加入 Read More 標示) ---
+// --- 組件: 內容卡片 (優化：維持美觀比例) ---
 const ContentCard = ({ title, description, main_images, categories, date, onClick }) => {
   const hasMultipleImages = main_images && main_images.length > 1;
 
@@ -60,7 +60,8 @@ const ContentCard = ({ title, description, main_images, categories, date, onClic
       onClick={onClick}
       className="group relative bg-white/70 backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white shadow-sm hover:shadow-2xl transition-all duration-500 h-full flex flex-col cursor-pointer"
     >
-      <div className="aspect-[4/3] overflow-hidden relative">
+      {/* 修正：卡片圖片容器，確保比例統一 (aspect-video) */}
+      <div className="aspect-video overflow-hidden relative">
         {hasMultipleImages ? (
           <Swiper
             modules={[Autoplay, EffectFade]}
@@ -93,7 +94,6 @@ const ContentCard = ({ title, description, main_images, categories, date, onClic
         <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors uppercase leading-tight">{title}</h3>
         <p className="text-slate-500 line-clamp-2 font-medium leading-relaxed mb-6">{description}</p>
         
-        {/* 新增: Read More 標示 */}
         <div className="mt-auto flex items-center text-blue-600 font-black text-[10px] uppercase tracking-widest group/btn">
           <span>Read More</span>
           <svg className="w-4 h-4 ml-2 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

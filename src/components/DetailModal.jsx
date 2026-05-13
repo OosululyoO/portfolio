@@ -12,7 +12,6 @@ import 'swiper/css/pagination';
 
 const DetailModal = ({ isOpen, onClose, content }) => {
   if (!content) return null;
-  // 修正：解構欄位以符合新的數據結構 (使用 categories 而非 category)
   const { title, categories, main_images, extra_images, body, description, date } = content;
 
   return (
@@ -49,11 +48,24 @@ const DetailModal = ({ isOpen, onClose, content }) => {
                 <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed">{description}</p>
               </header>
 
+              {/* 優化：主圖輪播區，自適應比例並維持美觀 */}
               {main_images?.length > 0 && (
-                <div className="mb-20 rounded-[3rem] overflow-hidden shadow-2xl">
-                  <Swiper modules={[Navigation, Pagination]} navigation pagination={{ clickable: true }} loop={main_images.length > 1} className="aspect-video">
+                <div className="mb-20 rounded-[3rem] overflow-hidden shadow-2xl bg-slate-50 border border-slate-100">
+                  <Swiper 
+                    modules={[Navigation, Pagination]} 
+                    navigation 
+                    pagination={{ clickable: true }} 
+                    loop={main_images.length > 1} 
+                    className="w-full h-auto"
+                  >
                     {main_images.map((img, i) => (
-                      <SwiperSlide key={i}><img src={getAssetPath(img)} className="w-full h-full object-cover" alt={`${title}-${i}`} /></SwiperSlide>
+                      <SwiperSlide key={i} className="flex items-center justify-center">
+                        <img 
+                          src={getAssetPath(img)} 
+                          className="max-w-full h-auto max-h-[70vh] object-contain mx-auto" 
+                          alt={`${title}-${i}`} 
+                        />
+                      </SwiperSlide>
                     ))}
                   </Swiper>
                 </div>
@@ -66,9 +78,16 @@ const DetailModal = ({ isOpen, onClose, content }) => {
               {extra_images?.length > 0 && (
                 <div className="mt-24">
                   <h3 className="text-sm font-black uppercase tracking-[0.4em] text-slate-300 mb-10 text-center">Gallery</h3>
+                  {/* 優化：照片牆，維持原始比例 */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {extra_images.map((img, index) => (
-                      <div key={index} className="rounded-[2rem] overflow-hidden border border-slate-100 shadow-lg"><img src={getAssetPath(img)} className="w-full h-auto" alt="gallery" /></div>
+                      <div key={index} className="rounded-[2rem] overflow-hidden border border-slate-100 shadow-lg bg-slate-50 p-2 flex items-center justify-center">
+                        <img 
+                          src={getAssetPath(img)} 
+                          className="max-w-full h-auto object-contain mx-auto rounded-xl" 
+                          alt="gallery" 
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>
