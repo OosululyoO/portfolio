@@ -8,12 +8,13 @@ import { motion } from 'framer-motion';
 
 // Swiper 核心組件
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Autoplay, Pagination } from 'swiper/modules';
+import { Navigation, Autoplay, Pagination, EffectFade } from 'swiper/modules';
 
 // Swiper 樣式
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
+import 'swiper/css/effect-fade'; // 引入漸變效果樣式
 
 export const getAssetPath = (path) => {
   if (!path) return '';
@@ -50,25 +51,46 @@ const loadContent = (modules) => {
   }).filter(Boolean);
 };
 
-const ContentCard = ({ title, description, main_images, categories, date, onClick }) => (
-  <div onClick={onClick} className="group relative bg-white/70 backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white shadow-sm hover:shadow-2xl transition-all duration-500 cursor-pointer h-full">
-    <div className="aspect-[4/3] overflow-hidden">
-      <img src={getAssetPath(main_images?.[0])} alt={title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-    </div>
-    <div className="p-8">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex flex-wrap gap-2">
-          {categories.map(cat => (
-            <span key={cat} className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{cat}</span>
-          ))}
-        </div>
-        <span className="text-[10px] font-bold text-slate-400">{date}</span>
+// 修正：在卡片內加入照片輪播功能
+const ContentCard = ({ title, description, main_images, categories, date, onClick }) => {
+  const hasMultipleImages = main_images && main_images.length > 1;
+
+  return (
+    <div className="group relative bg-white/70 backdrop-blur-sm rounded-[2.5rem] overflow-hidden border border-white shadow-sm hover:shadow-2xl transition-all duration-500 h-full flex flex-col">
+      <div className="aspect-[4/3] overflow-hidden relative" onClick={onClick}>
+        {hasMultipleImages ? (
+          <Swiper
+            modules={[Autoplay, EffectFade]}
+            effect="fade"
+            loop={true}
+            autoplay={{ delay: 3000, disableOnInteraction: false }}
+            className="w-full h-full cursor-pointer"
+          >
+            {main_images.map((img, idx) => (
+              <SwiperSlide key={idx}>
+                <img src={getAssetPath(img)} alt={`${title}-${idx}`} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        ) : (
+          <img src={getAssetPath(main_images?.[0])} alt={title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 cursor-pointer" />
+        )}
       </div>
-      <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors uppercase">{title}</h3>
-      <p className="text-slate-500 line-clamp-2 font-medium leading-relaxed">{description}</p>
+      <div className="p-8 flex-grow flex flex-col cursor-pointer" onClick={onClick}>
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex flex-wrap gap-2">
+            {categories.map(cat => (
+              <span key={cat} className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{cat}</span>
+            ))}
+          </div>
+          <span className="text-[10px] font-bold text-slate-400">{date}</span>
+        </div>
+        <h3 className="text-2xl font-black text-slate-900 mb-3 group-hover:text-blue-600 transition-colors uppercase">{title}</h3>
+        <p className="text-slate-500 line-clamp-2 font-medium leading-relaxed mt-auto">{description}</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const Home = ({ data, onOpenModal }) => {
   const sections = [
@@ -89,19 +111,20 @@ const Home = ({ data, onOpenModal }) => {
       {sections.map((section) => (
         <section key={section.title} className="mb-24 px-4 md:px-10">
           <h2 className="text-4xl font-black tracking-tight uppercase mb-10 px-4">{section.title}</h2>
+          {/* 確認：維持不同 Collections 的輪播與按鈕切換 */}
           <Swiper
             modules={[Navigation, Autoplay, Pagination]}
             spaceBetween={30}
             slidesPerView={1.2}
             loop={section.data.length > 3}
-            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            autoplay={{ delay: 5000, disableOnInteraction: false, pauseOnMouseEnter: true }}
             navigation
             pagination={{ clickable: true }}
             breakpoints={{ 768: { slidesPerView: 2.2 }, 1024: { slidesPerView: 3.2 } }}
             className="pb-12"
           >
             {section.data.map((item) => (
-              <SwiperSlide key={item.slug}>
+              <SwiperSlide key={item.slug} className="h-auto">
                 <ContentCard {...item} onClick={() => onOpenModal(item)} />
               </SwiperSlide>
             ))}
@@ -118,11 +141,12 @@ const CategoryPage = ({ data, onOpenModal }) => {
   const filteredItems = allItems.filter(item => item.categories?.some(c => c.toLowerCase() === slug.toLowerCase()));
 
   return (
-    <main className="pt-40 pb-20 px-10">
+    <main className="pt-40 pb-20 px-10 min-h-[70vh]">
       <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter">Category: <span className="text-blue-600">{slug}</span></h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredItems.map(item => <ContentCard key={item.slug} {...item} onClick={() => onOpenModal(item)} />)}
       </div>
+      {filteredItems.length === 0 && <p className="text-slate-500 mt-10">此分類目前沒有內容。</p>}
     </main>
   );
 };
