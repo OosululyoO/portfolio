@@ -91,20 +91,21 @@ const ContentCard = ({ title, description, main_images, categories, date, onClic
   );
 };
 
-// --- 新增：回到主頁按鈕組件 ---
 const BackToHomeButton = () => {
   const location = useLocation();
   if (location.pathname === '/') return null;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.5 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.5, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
       className="fixed bottom-8 right-8 z-[90]"
     >
       <Link 
         to="/" 
-        className="w-14 h-14 bg-white/90 backdrop-blur shadow-xl rounded-full flex items-center justify-center text-slate-900 hover:bg-black hover:text-white transition-all border border-slate-100"
+        className="w-14 h-14 bg-blue-600/40 backdrop-blur-md shadow-lg rounded-full flex items-center justify-center text-white hover:bg-blue-600/60 transition-all border border-white/20"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -114,7 +115,7 @@ const BackToHomeButton = () => {
   );
 };
 
-const Home = ({ data, onOpenModal }) => {
+const Home = ({ data, hero, onOpenModal }) => {
   const sections = [
     { id: 'about', title: 'About', data: data.about },
     { id: 'portfolio', title: 'Project', data: data.portfolio },
@@ -124,19 +125,19 @@ const Home = ({ data, onOpenModal }) => {
 
   return (
     <main className="relative pt-32 pb-20">
-      <section className="px-6 mb-24 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          {/* 修正：Main Title */}
+      <section className="px-10 md:px-24 mb-24 text-left max-w-7xl">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
+          {/* 從 hero.yml 讀取主標題 */}
           <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-slate-900 mb-2 uppercase leading-none">
-            劉晉安
+            {hero.mainTitle || "劉晉安"}
           </h1>
-          {/* 修正：Accent Title 帶漸層 */}
+          {/* 從 hero.yml 讀取副標題 */}
           <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-8 bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent uppercase">
-            CHIN AN LIU
+            {hero.accentTitle || "CHIN AN LIU"}
           </h2>
-          {/* 修正：Hero Description */}
-          <p className="text-xl md:text-2xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed italic">
-            很高興認識你：）
+          {/* 從 hero.yml 讀取描述 */}
+          <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed italic">
+            {hero.description || "很高興認識你：）"}
           </p>
         </motion.div>
       </section>
@@ -176,28 +177,32 @@ const Home = ({ data, onOpenModal }) => {
 const CategoryPage = ({ data, onOpenModal }) => {
   const { slug } = useParams();
   
-  // 修正：更精確的分類池映射，解決顯示不出來的問題
   const poolMap = {
-    'about': data.about,
-    'portfolio': data.portfolio,
-    'project': data.portfolio,
-    'achievements': data.achievements,
-    'activities': data.activities
+    'about': { title: 'ABOUT', items: data.about },
+    'portfolio': { title: 'PROJECT', items: data.portfolio },
+    'project': { title: 'PROJECT', items: data.portfolio },
+    'achievements': { title: 'ACHIEVEMENTS', items: data.achievements },
+    'activities': { title: 'ACTIVITIES', items: data.activities }
   };
 
-  const filteredItems = poolMap[slug.toLowerCase()] || [];
+  const categoryData = poolMap[slug.toLowerCase()] || { title: slug.toUpperCase(), items: [] };
 
   return (
-    <main className="pt-40 pb-20 px-10 min-h-[70vh]">
-      <h1 className="text-5xl font-black mb-12 uppercase tracking-tighter">
-        Category: <span className="text-blue-600">{slug}</span>
-      </h1>
+    <main className="pt-40 pb-20 px-10 md:px-24 min-h-[70vh]">
+      <motion.h1 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-6xl md:text-8xl font-black mb-16 tracking-tighter bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent uppercase leading-none"
+      >
+        {categoryData.title}
+      </motion.h1>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredItems.map(item => (
+        {categoryData.items.map(item => (
           <ContentCard key={item.slug} {...item} onClick={() => onOpenModal(item)} />
         ))}
       </div>
-      {filteredItems.length === 0 && (
+      {categoryData.items.length === 0 && (
         <p className="text-slate-500 mt-10 italic text-xl">目前此分類尚無內容</p>
       )}
     </main>
@@ -206,10 +211,19 @@ const CategoryPage = ({ data, onOpenModal }) => {
 
 export default function App() {
   const [data, setData] = useState({ about: [], portfolio: [], achievements: [], activities: [] });
+  const [hero, setHero] = useState({}); // 新增 Hero 狀態
   const [modal, setModal] = useState({ isOpen: false, content: null });
 
   useEffect(() => {
     const loadAll = async () => {
+      // 載入設定檔案
+      const heroModules = import.meta.glob('./content/settings/hero.yml', { query: '?raw', eager: true });
+      const heroKey = Object.keys(heroModules)[0];
+      if (heroKey) {
+        setHero(yaml.load(heroModules[heroKey]));
+      }
+
+      // 載入內容檔案
       const abModules = import.meta.glob('./content/about/*.md', { query: '?raw', eager: true });
       const pModules = import.meta.glob('./content/portfolio/*.md', { query: '?raw', eager: true });
       const achModules = import.meta.glob('./content/achievements/*.md', { query: '?raw', eager: true });
@@ -231,7 +245,7 @@ export default function App() {
         <ParticleBackground />
         <Navbar />
         <Routes>
-          <Route path="/" element={<Home data={data} onOpenModal={(item) => setModal({ isOpen: true, content: item })} />} />
+          <Route path="/" element={<Home data={data} hero={hero} onOpenModal={(item) => setModal({ isOpen: true, content: item })} />} />
           <Route path="/category/:slug" element={<CategoryPage data={data} onOpenModal={(item) => setModal({ isOpen: true, content: item })} />} />
         </Routes>
         <DetailModal 
